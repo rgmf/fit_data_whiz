@@ -1,0 +1,259 @@
+* Importar FIT: paso 1 (verificar si es válido y soportado)
+Cuando se importa un fichero FIT, primero hay que comprobar si es un fichero aceptado por la aplicación. De momento se aceptan ficheros con actividades: running (y sus sub-actividades como trail), walking, hiking, cycling (y sus sub-actividades como road), duathlon, escalada (y sus sub-actividades como bouldering) y fuerza.
+
+Paso previo: cuando se parsea haciendo uso de *garmin_fit_sdk* hay que comprobar que no hayan errores. Si hay errores no seguimos. A partir de ahí, podemos seguir.
+
+La pregunta es, ¿cómo sabemos si un fichero FIT es un fichero de actividad y contiene una de estas actividades? Si se cumplen estas tres condiciones:
+- Hay mensaje *file_id* :: con valor *file_id["type"]* igual a *activity* (hay otros tipos que, de momento, no voy a dar soporte como *segment*).
+- Hay mensaje *session* :: aquí puedo ver el *sport* y *sub_sport*. Si, además, hay varias *session* entonces, esto significa, que el deporte es *multisport* (duathlon si hay dos o triathlon si hay tres, por ejemplo).
+- Este mensaje *session* tiene un *sport* con uno de estos valores ::
+  - *sport* = running, *sub_sport* = generic | trail | treadmill | track
+  - *sport* = walking, *sub_sport* = generic
+  - *sport* = hiking, *sub_sport* = generic
+  - *sport* = cycling, *sub_sport* = road | mountain | spin | indoor_cycling | downhill
+  - *sport* = multisport (si hay varios mensajes *session* o *sport*)
+  - *sport* = rock_climbing, *sub_sport* = bouldering | indoor_climbing
+  - *sport* = training, *sub_sport* = strength_training
+
+Una vez comprobado que el *sport*/*sub_sport* está soportado (más abajo se indican los *sport*/*sub_sport* que se soportan), dependerá del deporte, se podrán recoger unos datos u otros, lo que se describe en apartados posteriores.
+
+Dentro de los deportes a los que se da soporte, detallo más información en los siguientes apartados:
+
+** Running
+Se aceptan *generic* y *trail*. A día de hoy no he hecho otras modalidades y, por tanto, no puedo saber si la información se guarda igual.
+
+** Cycling
+Se aceptan *road* y *mountain*, que son las opciones que ha podido ver y testear.
+
+** Multisport
+Se aceptan si todas las sesiones son conocidas, es decir, *sport* y *sub_sport* a los que se le da soporte.
+
+** Rock Climbing
+Se acepta *bouldering* porque no he podido probar otros.
+
+** Training
+Solo se acepta *strength_training* porque no he podido probar otros.
+
+* Importar FIT: paso 2 (parsing en función del deporte)
+Se entiende que el FIT que llega contiene un *sport*/*sub_sport* soportado.
+
+Ahora bien, dependiendo del tipo de deporte habrá que optar por un parser u otro. Veamos, por deportes, cómo se debe afrontar el parsing.
+
+** Running
+Independientemente de que sea generic o trail, el parsing es igual.
+
+En este tipo de actividades no debería permitir el auto-pause porque se puede ir lento (piensa en el trail). Sí se podría tratar de detectar cuánto tiempo se ha estado parado y cuánto tiempo andando, pero no computar el tiempo en movimiento sino que habría que obtenerlo como se indica abajo.
+
+Esta esta toda la información que voy a sacar y de dónde la voy a sacar:
+- Fabricante del dispositivo con el que se grabó :: *file_id["manufacturer"]*
+- Modelo del dispositivo con el que se grabó :: *file_id["garmin_product"]*
+- nombre :: el nombre de la actividad lo puedo sacar de *sport["name"]*
+- hora/fecha de inicio (cuando se le da a play) :: se puede obtener de *file_id["time_created"]* o de *session["start_time"]*
+- hora/fecha de fin (cuado se la da a stop) :: se tiene un total_elapsed_time en *session["total_elapsed_time"]* que se puede sumar a la hora/fecha de inicio para obtener la hora de fin
+- tiempo transcurrido (incluyendo pausas y detenciones) :: sería el *session["total_elapsed_time"]*
+- tiempo activo o en movimiento dado por el fichero FIT :: sería el *session["total_timer_time"]*.
+- tiempo activo o en movimiento computado :: se puede hacer con los *record* que contiene *record["timestamp"]* pero en este tipo de deportes no lo haría (pensar en trail). Se puede usar para más que nada ver cuánto tiempo se ha estado parado, eso sí.
+- sport :: se puede obtener de dos mensajes, o bien *session["sport"]* o en *sport["sport"]*
+- sub_sport :: se puede obtener de dos mensajes, o bien *session["sub_sport"]* o en *sport["sub_sport"]*
+- guardar los records :: hay que almacenar todos los puntos que vienen en los records: timestamp, position_lat, position_lon, distance, enhanced_speed/speed, enhanced_altitude/altitude, cycle_length16, heart_rate, cadence, temperature, fractional_cadence, enhanced_respiration_rate/respiration_rate
+- Estadísticas :: las puedo computar de los *record* o sacarlos directamente de los *session* haciendo las sumas oportunas. En la *session* tendría:
+  - start_time
+  - start_position_lat
+  - start_position_long
+  - total_elapsed_time
+  - total_timer_time
+  - total_distance
+  - total_cycles
+  - end_position_lat
+  - end_position_long
+  - sport_profile_name
+  - enhanced_avg_speed
+  - enhanced_max_speed
+  - training_load_peak (carga de ejercicio)
+  - total_grit (parece que siempre es NaN)
+  - avg_flow (parece que siempre es NaN)
+  - message_index
+  - total_calories
+  - avg_speed
+  - max_speed
+  - total_ascent
+  - total_descent
+  - first_lap_index
+  - num_laps
+  - sport
+  - sub_sport
+  - avg_heart_rate
+  - max_heart_rate
+  - avg_cadence
+  - max_cadence
+  - total_training_effect
+  - total_anaerobic_training_effect
+  - avg_temperature
+  - max_temperature
+  - min_temperature
+  - avg_fractional_cadence
+  - max_fractional_cadence
+  - total_fractional_ascent
+  - total_fractional_descent
+  - total_strides
+  - avg_running_cadence
+  - max_running_cadence
+  - enhanced_avg_respiration_rate
+  - enhanced_max_respiration_rate
+  - enhanced_min_respiration_rate
+
+*** lap
+Al tiempo que se recoge la información de arriba (información principal) también se tiene y se puede obtener información sobre los *laps*. En cada lap se tiene:
+- timestamp
+- start_time
+- start_position_lat
+- start_position_long
+- end_position_lat
+- end_position_long
+- total_elapsed_time
+- total_timer_time
+- total_distance
+- enhanced_avg_speed
+- enhanced_max_speed
+- enhanced_min_altitude
+- enhanced_max_altitude
+- total_grit (dificultada encontrada en el lap, métrica desarrollada por Firstbeat. Cuanto mayor es el grit mayor es la dificultad)
+- avg_flow (es un indicador del "flow" o fluidez en la carrera)
+- message_index (de los laps, el orden en que está dicho lap)
+- total_calories
+- avg_speed
+- max_speed
+- total_ascent
+- total_descent
+- wkt_step_index (índice de un entrenamiento estructurado o workout)
+- avg_heart_rate
+- max_heart_rate
+- avg_cadence
+- max_cadence
+- lap_trigger (el desencadenante del lap: '0': 'manual', '1': 'time', '2': 'distance', '3': 'position_start', '4': 'position_lap', '5': 'position_waypoint', '6': 'position_marked', '7': 'session_end', '8': 'fitness_equipment'
+- avg_temperature
+- max_temperature
+- avg_fractional_cadence
+- max_fractional_cadence
+- min_temperature
+- total_fractional_ascent
+- total_fractional_descent
+- total_strides (número de pasos o zancadas)
+- avg_running_cadence
+- max_running_cadence
+
+*** zones_target
+No saco nada en claro aquí
+
+*** training_file
+Si existe este mensaje y su *type* es igual a "workout", entonces se tienen mensajes *workout*. Es un mensaje simple como este:
+
+{
+'timestamp': datetime.datetime(2023, 7, 25, 19, 9, 56, tzinfo=datetime.timezone.utc),
+
+'serial_number': 696265001,
+
+'time_created': datetime.datetime(2023, 6, 28, 12, 59, 36, tzinfo=datetime.timezone.utc),
+
+'manufacturer': 'garmin',
+
+'product': 65534,
+
+'type': 'workout',
+
+'garmin_product': 'connect'
+}
+
+*** workout
+Es un mensaje con metainformación sobre el workout (los detalles están en los workout_step). Por ejemplo:
+
+{
+'capabilities': 32,
+'wkt_name': '3x1km@3:30',
+10: 0,
+'num_valid_steps': 5,
+'sport': 'running',
+9: 0
+}
+
+Eso sí, el field "capabilities" parece que tiene una importancia bastante grande porque indica que, si es 32 su valor, se trata de un workout compatible con los campos "wkt_step_duration" y "wkt_step_target".
+
+En resumen, cuando ves un valor "capabilities" de "32" en un mensaje "workout" en archivos FIT, indica que el entrenamiento estructurado está definido con pasos de duración y pasos de objetivo, lo que permite una estructura más detallada y personalizada para la actividad de entrenamiento.
+
+*** workout_step
+Estos mensajes están asociados con los lap. De hecho, las estadísticas se pueden obtener en los lap. Cuando se tiene un workout, en los lap se tiene un campo llamado *wkt_step_index* que se asocia con el *message_index* del workout_step.
+
+Se pueden tener varios laps por cada workout_step. Por ejmplo: imagina que tienes un workout en el que vas a hacer 3km y, por tanto, habrán 3 laps de 1km. Esto se da en los workout que he creado en el que el calentamiento es abierto, hasta pulsar el botón de lap.
+
+Así pues, si quiero sacar estadísticas de los pasos del workout voy a tener que sumar varios laps o, al menos, eso se puede dar.
+
+NOTA: recuerda que estamos analizando el running. Para fuerza, si hay workout, veremos que se asocian con los *set* y no con los *lap* (recuerda que en los deportes de fuerza no hay laps).
+
+Se pueden encontrar estos campos:
+- message_index :: índice de este paso (así se puede buscar también el lap)
+- duration_type :: se pueden buscar los valores posibles en el profile, dentro de 'wkt_step_duration', o eso creo
+- target_type :: sus valores se pueden encontrar en 'wkt_step_target' en el profile
+- intensity :: sus valores se pueden encontrar en el profile
+- duration_value :: la duración
+- custom_target_value_low ::
+- custom_target_value_high ::
+- duration_type ::
+- duration_distance ::
+- target_speed_zone ::
+- custom_target_speed_low ::
+- custom_target_speed_high ::
+- duration_time ::
+- exercise_category ::
+- exercise_weight ::
+- weight_display_unit ::
+
+Aquí se mezclan campos que he encontrado en entrenamientos de running y training (fuerza). Puede que hayan más y no tienen por qué estar todos.
+
+*** time_in_zone
+Está asociado a cada uno de los lap así que hay que sumar para obtener estadísticas totales. En cada mensaje hay un campo llamado *reference_mesg* cuya valor puede ser "lap" en cuyo caso el campo *reference_index* se asociaría con el *message_index* del lap.
+
+Ejemplo de mensaje (queda bastante claro qué es cada dato):
+
+{
+'timestamp': datetime.datetime(2023, 7, 25, 19, 14, 30, tzinfo=datetime.timezone.utc),
+
+'time_in_hr_zone': [59.274, 108.998, 106.0, 0.0, 0.0, 0.0, 0.0],
+
+'reference_mesg': 'lap',
+
+'reference_index': 0,
+
+'hr_zone_high_boundary': [102, 126, 140, 149, 157, 184],
+
+'hr_calc_type': 'percent_lthr',
+
+'max_heart_rate': 184,
+
+'resting_heart_rate': 0,
+
+'threshold_heart_rate': 157
+}
+
+
+** Walking
+No debe haber diferencias con el deporte del running. Se aceptan todo tipo de sub-deportes.
+
+
+** Hiking
+Idéntico a walking.
+
+
+** Cycling
+Independientemente de que sea road o mountain, el parsing es igual.
+
+En principio debería ser igual que en el caso del running y debería poder usar el mismo parsing con la salvedad que, en este caso, si lo deseo puedo computar el tiempo en movimiento a través de los **record** detectando pausas y paradas que no computen.
+
+
+** Multisport
+Un multisport se caracteriza porque hay varias sesiones y todas las sesiones son de un deporte soportado: running, cycling, walking, hiking.
+
+Considerando estos dos campos que vienen en los mensajes *session*:
+- first_lap_index
+- num_laps
+
+Y conociendo la hora de inicio, el tiempo transcurrido, la posición inicial y la posición final, debería ser sencillo extraer los *record* por cada sesión.
