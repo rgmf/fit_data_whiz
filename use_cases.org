@@ -1,10 +1,12 @@
 * Importar FIT: paso 1 (verificar si es válido y soportado)
 Cuando se importa un fichero FIT, primero hay que comprobar si es un fichero aceptado por la aplicación. De momento se aceptan ficheros con actividades: running (y sus sub-actividades como trail), walking, hiking, cycling (y sus sub-actividades como road), duathlon, escalada (y sus sub-actividades como bouldering) y fuerza.
 
+*Antes de nada* hay que comprobar si en el FILE_ID (mensaje) el tipo es un "ACTIVITY".
+
 Paso previo: cuando se parsea haciendo uso de *garmin_fit_sdk* hay que comprobar que no hayan errores. Si hay errores no seguimos. A partir de ahí, podemos seguir.
 
 La pregunta es, ¿cómo sabemos si un fichero FIT es un fichero de actividad y contiene una de estas actividades? Si se cumplen estas tres condiciones:
-- Hay mensaje *file_id* :: con valor *file_id["type"]* igual a *activity* (hay otros tipos que, de momento, no voy a dar soporte como *segment*).
+- Hay mensaje *file_id* :: con valor *file_id["type"]* igual a *activity* (hay otros tipos que, de momento, no voy a dar soporte a otros como a *segment*).
 - Hay mensaje *session* :: aquí puedo ver el *sport* y *sub_sport*. Si, además, hay varias *session* entonces, esto significa, que el deporte es *multisport* (duathlon si hay dos o triathlon si hay tres, por ejemplo).
 - Este mensaje *session* tiene un *sport* con uno de estos valores ::
   - *sport* = running, *sub_sport* = generic | trail | treadmill | track
@@ -14,6 +16,8 @@ La pregunta es, ¿cómo sabemos si un fichero FIT es un fichero de actividad y c
   - *sport* = multisport (si hay varios mensajes *session* o *sport*)
   - *sport* = rock_climbing, *sub_sport* = bouldering | indoor_climbing
   - *sport* = training, *sub_sport* = strength_training
+
+De la documentación del SDK de Garmin: "If there is only one Session message in the file, then all messages in the file belong to that single session. If there are multiple Session messages in the file, then messages are considered to be part of a session if their timestamp occurs within the time span of that session.".
 
 Una vez comprobado que el *sport*/*sub_sport* está soportado (más abajo se indican los *sport*/*sub_sport* que se soportan), dependerá del deporte, se podrán recoger unos datos u otros, lo que se describe en apartados posteriores.
 
