@@ -1,8 +1,12 @@
 from datetime import datetime
-from typing import List
 
-from ..parse import FitActivityParse
-from ..stats import FitMultisportActivity, FitDistanceActivity, FitTransitionActivity
+from ..parse import FitParser
+from ..parsers.results.result import FitResult, FitError
+from ..parsers.results.stats import (
+    FitMultisportActivity,
+    FitDistanceActivity,
+    FitTransitionActivity
+)
 from ..definitions import (
     RUNNING_SPORT,
     CYCLING_SPORT,
@@ -13,18 +17,12 @@ from ..definitions import (
 from .test_fit_parse_distance_activities import assert_is_distance_activity_with_required_stats
 
 
-def assert_parse_without_errors(path_file: str) -> tuple:
-    fit_parse = FitActivityParse()
-    fit_parse.parse(path_file)
-
-    messages = fit_parse.get_messages()
-    activity = fit_parse.get_activity()
-    errors = fit_parse.get_errors()
-
-    assert not fit_parse.has_errors()
-    assert len(errors) == 0
-
-    return messages, activity, errors
+def assert_parse_without_errors(path_file: str) -> FitResult:
+    fit_parse = FitParser(path_file)
+    activity: FitResult = fit_parse.parse()
+    assert not isinstance(activity, FitError)
+    assert isinstance(activity, FitMultisportActivity)
+    return activity
 
 
 def assert_is_transition_activity_with_required_stats(activity: FitTransitionActivity) -> None:
@@ -49,20 +47,6 @@ def assert_is_transition_activity_with_required_stats(activity: FitTransitionAct
     assert isinstance(activity.time.timer, float)
 
 
-def assert_messages(messages: List[dict]) -> None:
-    assert "FILE_ID" in messages
-    assert messages["FILE_ID"] is not None
-    assert len(messages["FILE_ID"]) == 1
-
-    assert "SESSION" in messages
-    assert messages["SESSION"] is not None
-    assert len(messages["SESSION"]) == 5
-
-    assert "RECORD" in messages
-    assert messages["RECORD"] is not None
-    assert len(messages["RECORD"]) > 0
-
-
 def assert_duathlon(activity: FitMultisportActivity, sports: list[tuple]) -> None:
     assert isinstance(activity, FitMultisportActivity)
     assert len(activity.fit_activities) == 5
@@ -82,9 +66,7 @@ def assert_duathlon(activity: FitMultisportActivity, sports: list[tuple]) -> Non
 
 
 def test_fit_parse_multisport_duathlon():
-    messages, activity, errors = assert_parse_without_errors("tests/files/duathlon.fit")
-    assert not errors
-    assert_messages(messages)
+    activity = assert_parse_without_errors("tests/files/duathlon.fit")
     assert_duathlon(
         activity,
         [

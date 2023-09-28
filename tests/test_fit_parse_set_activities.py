@@ -1,43 +1,26 @@
-from typing import List
 from datetime import datetime
 
-from ..parse import FitActivityParser
+from ..parse import FitParser
+from ..parsers.results.result import FitResult, FitError
 from ..definitions import (
     TRAINING_SPORT,
     STRENGTH_TRAINING_SUB_SPORT,
     ExcerciseCategories
 )
-from ..stats import FitActivity, FitSetActivity, FitSet
+from ..parsers.results.stats import FitActivity, FitSetActivity, FitSet
 
 
-def assert_parse_without_errors(path_file: str) -> tuple:
-    fit_parse = FitActivityParser()
-    fit_parse.parse(path_file)
-
-    messages = fit_parse.get_messages()
-    activity = fit_parse.get_activity()
-    errors = fit_parse.get_errors()
-
-    assert not fit_parse.has_errors()
-    assert len(errors) == 0
-
-    return messages, activity, errors
+def assert_parse_without_errors(path_file: str) -> FitResult:
+    fit_parse = FitParser(path_file)
+    activity: FitResult = fit_parse.parse()
+    assert not isinstance(activity, FitError)
+    assert isinstance(activity, FitActivity)
+    return activity
 
 
-def assert_messages(messages: List[dict], expected_sport: str, expected_sub_sport: str) -> None:
-    assert "FILE_ID" in messages
-    assert messages["FILE_ID"] is not None
-    assert len(messages["FILE_ID"]) == 1
-
-    assert "SESSION" in messages
-    assert messages["SESSION"] is not None
-    assert len(messages["SESSION"]) == 1
-    assert messages["SESSION"][0].sport == expected_sport
-    assert messages["SESSION"][0].sub_sport == expected_sub_sport
-
-    assert "SET" in messages
-    assert messages["SET"] is not None
-    assert len(messages["SET"]) > 0
+def assert_sport(activity: FitActivity, expected_sport: str, expected_sub_sport: str) -> None:
+    assert activity.sport == expected_sport
+    assert activity.sub_sport == expected_sub_sport
 
 
 def assert_is_set_activity_with_minimal_required_stats(activity: FitActivity) -> None:
@@ -81,24 +64,22 @@ def assert_sets_data(sets: list[FitSet]) -> None:
 
 
 def test_fit_parse_training():
-    messages, activity, errors = assert_parse_without_errors("tests/files/training_strength.fit")
-    assert not errors
-    assert_messages(messages, TRAINING_SPORT, STRENGTH_TRAINING_SUB_SPORT)
+    activity = assert_parse_without_errors("tests/files/training_strength.fit")
+    assert_sport(activity, TRAINING_SPORT, STRENGTH_TRAINING_SUB_SPORT)
     assert_is_set_activity_with_minimal_required_stats(activity)
     assert_sets_data(activity.sets)
 
 
 def test_fit_parse_training_with_20_sets():
-    messages, activity, errors = assert_parse_without_errors(
+    activity = assert_parse_without_errors(
         "tests/files/training_4pull_up_3push_up_3curl_3bench_press_1deadlift_1sit_up_5unknown.fit"
     )
-    assert not errors
-    assert_messages(messages, TRAINING_SPORT, STRENGTH_TRAINING_SUB_SPORT)
+    assert_sport(activity, TRAINING_SPORT, STRENGTH_TRAINING_SUB_SPORT)
     assert_is_set_activity_with_minimal_required_stats(activity)
     assert_sets_data(activity.sets)
 
-    rest: int = 20
-    work: int = 20
+    rest = 20
+    work = 20
     assert len([c for c in activity.sets]) == rest + work
     assert len([c for c in activity.sets if c.excercise == ExcerciseCategories.REST]) == 20
     assert len([c for c in activity.sets if c.excercise != ExcerciseCategories.REST]) == 20

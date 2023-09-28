@@ -1,43 +1,26 @@
-from typing import List
 from datetime import datetime
 
-from ..parse import FitActivityParser
+from ..parse import FitParser
 from ..definitions import (
     ROCK_CLIMBING_SPORT,
     BOULDERING_SUB_SPORT
 )
-from ..stats import FitActivity, FitClimbActivity, FitClimb
+from ..parsers.results.stats import FitActivity, FitClimbActivity, FitClimb
+from ..parsers.results.result import FitResult, FitError
 from ..definitions import ClimbResult
 
 
-def assert_parse_without_errors(path_file: str) -> tuple:
-    fit_parse = FitActivityParser()
-    fit_parse.parse(path_file)
-
-    messages = fit_parse.get_messages()
-    activity = fit_parse.get_activity()
-    errors = fit_parse.get_errors()
-
-    assert not fit_parse.has_errors()
-    assert len(errors) == 0
-
-    return messages, activity, errors
+def assert_parse_without_errors(path_file: str) -> FitResult:
+    fit_parse = FitParser(path_file)
+    activity: FitResult = fit_parse.parse()
+    assert not isinstance(activity, FitError)
+    assert isinstance(activity, FitActivity)
+    return activity
 
 
-def assert_messages(messages: List[dict], expected_sport: str, expected_sub_sport: str) -> None:
-    assert "FILE_ID" in messages
-    assert messages["FILE_ID"] is not None
-    assert len(messages["FILE_ID"]) == 1
-
-    assert "SESSION" in messages
-    assert messages["SESSION"] is not None
-    assert len(messages["SESSION"]) == 1
-    assert messages["SESSION"][0].sport == expected_sport
-    assert messages["SESSION"][0].sub_sport == expected_sub_sport
-
-    assert "SPLIT" in messages
-    assert messages["SPLIT"] is not None
-    assert len(messages["SPLIT"]) > 0
+def assert_sport(activity: FitActivity, expected_sport: str, expected_sub_sport: str) -> None:
+    assert activity.sport == expected_sport
+    assert activity.sub_sport == expected_sub_sport
 
 
 def assert_is_climb_activity_with_minimal_required_stats(activity: FitActivity) -> None:
@@ -68,19 +51,15 @@ def assert_climbs_data(climbs: list[FitClimb]) -> None:
 
 
 def test_fit_parse_bouldering():
-    messages, activity, errors = assert_parse_without_errors("tests/files/bouldering.fit")
-    assert not errors
-    assert_messages(messages, ROCK_CLIMBING_SPORT, BOULDERING_SUB_SPORT)
+    activity = assert_parse_without_errors("tests/files/bouldering.fit")
+    assert_sport(activity, ROCK_CLIMBING_SPORT, BOULDERING_SUB_SPORT)
     assert_is_climb_activity_with_minimal_required_stats(activity)
     assert_climbs_data(activity.climbs)
 
 
 def test_fit_parse_bouldering_with_18_climbs():
-    messages, activity, errors = assert_parse_without_errors(
-        "tests/files/bouldering_18_climbs.fit"
-    )
-    assert not errors
-    assert_messages(messages, ROCK_CLIMBING_SPORT, BOULDERING_SUB_SPORT)
+    activity = assert_parse_without_errors("tests/files/bouldering_18_climbs.fit")
+    assert_sport(activity, ROCK_CLIMBING_SPORT, BOULDERING_SUB_SPORT)
     assert_is_climb_activity_with_minimal_required_stats(activity)
     assert_climbs_data(activity.climbs)
 

@@ -1,14 +1,19 @@
-from enum import StrEnum, Enum
+from enum import Enum, StrEnum
 
 from .messages import (
     FitFileIdMesg,
-    FitSessionMesg,
-    FitRecordMesg,
     FitLapMesg,
+    FitRecordMesg,
+    FitSessionMesg,
     FitSetMesg,
     FitSplitMesg,
     FitWorkoutMesg,
-    FitWorkoutStepMesg
+    FitWorkoutStepMesg,
+    FitMonitoringHrDataMesg,
+    FitStressLevelMesg,
+    FitRespirationRateMesg,
+    FitMonitoringInfoMesg,
+    FitMonitoringMesg
 )
 
 
@@ -23,6 +28,8 @@ MESSAGES = {
         "num": 0,
         "mesg_cls": FitFileIdMesg
     },
+
+    # ACTIVITY DEFINITIONS
     # "SPORT": {
     #     "name": "SPORT",
     #     "num": 12,
@@ -78,6 +85,55 @@ MESSAGES = {
     #     "num": 34,
     #     "mesg_cls": None
     # }
+
+    # MONITOR DEFINITIONS
+    "MONITORING_INFO": {
+        "name": "MONITORING_INFO",
+        "num": 103,
+        "mesg_cls": FitMonitoringInfoMesg
+    },
+    "MONITORING": {
+        "name": "MONITORING",
+        "num": 55,
+        "mesg_cls": FitMonitoringMesg
+    },
+    "MONITORING_HR_DATA": {
+        "name": "MONITORING_HR_DATA",
+        "num": 211,
+        "mesg_cls": FitMonitoringHrDataMesg
+    },
+    "STRESS_LEVEL": {
+        "name": "STRESS_LEVEL",
+        "num": 227,
+        "mesg_cls": FitStressLevelMesg
+    },
+    "RESPIRATION_RATE": {
+        "name": "RESPIRATION_RATE",
+        "num": 297,
+        "mesg_cls": FitRespirationRateMesg
+    },
+
+    # SLEEP AND HRV DEFINITIONS
+    "SLEEP_LEVEL": {
+        "name": "SLEEP_LEVEL",
+        "num": 275,
+        "mesg_cls": None
+    },
+    "SLEEP_ASSESSMENT": {
+        "name": "SLEEP_ASSESSMENT",
+        "num": 346,
+        "mesg_cls": None
+    },
+    "HRV_STATUS_SUMMARY": {
+        "name": "HRV_STATUS_SUMMARY",
+        "num": 370,
+        "mesg_cls": None
+    },
+    "HRV_VALUE": {
+        "name": "HRV_VALUE",
+        "num": 371,
+        "mesg_cls": None
+    }
 }
 
 
@@ -195,6 +251,19 @@ SPORTS = {
         TRANSITION_SPORT: [GENERIC_SUB_SPORT]
     }
 }
+
+ACTIVITY_TYPES = {
+    0: "generic",
+    1: "running",
+    2: "cycling",
+    3: "transition",
+    4: "fitness_equipment",
+    5: "swimming",
+    6: "walking",
+    8: "sedentary",
+    254: "all"
+}
+ACTIVITY_TYPE_UNKNOWN = "unknown"
 
 
 def is_distance_sport(sport: str) -> bool:

@@ -1,32 +1,58 @@
-from typing import List
+import os
 
 from garmin_fit_sdk import Decoder, Stream, Profile
 
 from .custom_logging import get_logger, initialize
-from .definitions import (
-    MESSAGES, SPORTS, is_distance_sport, is_climb_sport, is_set_sport
-)
-from .exceptions import (
-    FitException,
-    NotSupportedFitFileException,
-    NotFitMessageFoundException,
-    NotSupportedFitSportException
-)
-from .messages import (
-    FitWorkoutMesg, FitWorkoutStepMesg, FitSessionMesg
-)
-from .stats import (
-    FitActivity,
-    FitDistanceActivity,
-    FitSetActivity,
-    FitClimbActivity,
-    FitMultisportActivity
-)
+from .definitions import MESSAGES
+from .exceptions import FitException, NotFitMessageFoundException, NotSupportedFitFileException
 from .custom_logging import LogLevel
-
+from .parsers.results.result import FitResult, FitError
+from .parsers.parser import FitActivityParser, FitMonitoringParser, FitSleepParser
 
 # Initialize logger system.
 initialize(LogLevel.DEBUG)
+
+
+# All FIT files supported.
+FIT_FILE_SUPPORTED = {
+    "activity": {
+        "name": "activity",
+        "num": 4,
+        "parser_cls": FitActivityParser,
+        "description": "Activity FIT file: running, cycling..."
+    },
+    "monitoring_a": {
+        "name": "monitoring_a",
+        "num": 15,
+        "parser_cls": FitMonitoringParser,
+        "description": ""
+    },
+    "monitoring_b": {
+        "name": "monitoring_b",
+        "num": 32,
+        "parser_cls": FitMonitoringParser,
+        "description": "Monitoring FIT file with steps, stress level... data"
+    },
+    49: {
+        "name": 49,
+        "num": 49,
+        "parser_cls": FitSleepParser,
+        "description": "FIT file with sleep data"
+    }
+}
+
+
+class FitReader:
+    def __init__(self, root_folder: str) -> None:
+        self.fit_results: dict[str, FitResult] = {}
+
+        for dirpath, dirnames, filenames in os.walk(root_folder):
+            for filename in [name for name in filenames if name.lower().endswith(".fit")]:
+                print(os.path.join(dirpath, filename))
+                fit_file_path: str = os.path.join(dirpath, filename)
+                fit_parser = FitParser(fit_file_path)
+                fit_result: FitResult = fit_parser.parse()
+                self.fit_results[fit_file_path] = fit_result
 
 
 class FitParser:
@@ -35,119 +61,46 @@ class FitParser:
     It pre-parses all fit files and uses the right parser to parse the fit
     file.
 
-    Not all fit files are supported, so the parse can result in errors.
+    It makes generic checking because not all fit files are supported, so the
+    parse can result in errors.
+
+    To use this class, build an object using the constructor that only needs the
+    path of the file to be parsed.
+
+    Once you have the object of this class then call parse method and it returns
+    a FitResult that can be a FitError, FitActivity or whatever fit result
+    depending on the type of the fit file.
     """
-    pass
-
-
-class FitActivityParser:
-    """Parser for fit activity files.
-
-    It parses a fit file using the Garmin SDK library and build a FitActivity
-    object that contains all stats from the FIT file.
-
-    Also, it handles the errors that save into an array of errors.
-    """
-
-    def __init__(self) -> None:
+    def __init__(self, fit_file_path: str) -> None:
+        self._fit_file_path: str = fit_file_path
         self._messages: dict[str, list] = {name: [] for name in MESSAGES}
         self._errors: list[Exception] = []
         self._has_critical_error: bool = False
-        self._activity: FitActivity | None = None
 
-    def parse(self, file_path: str) -> None:
-        self._load_all_messages(file_path)
-        if self.has_errors():
-            return
-
-        self._check_supported_fit()
-        if self.has_errors():
-            return
-
-        self._activity = self._build_activity()
-
-    def _load_all_messages(self, file_path: str) -> None:
-        stream = Stream.from_file(file_path)
+    def parse(self) -> FitResult:
+        stream = Stream.from_file(self._fit_file_path)
         decoder = Decoder(stream)
         _, decoder_errors = decoder.read(mesg_listener=self._mesg_listener)
         self._errors.extend(decoder_errors)
 
-    def _check_supported_fit(self) -> None:
-        self._check_file_id_exists()
-        self._check_exists_session_with_supported_sport()
+        if len(self._errors) > 0:
+            return FitError(self._fit_file_path, self._errors)
 
-    def _check_file_id_exists(self) -> None:
         if not self._messages["FILE_ID"]:
             self._errors.append(NotFitMessageFoundException("file_id"))
+            return FitError(self._fit_file_path, self._errors)
 
-    def _check_exists_session_with_supported_sport(self) -> None:
-        if not self._messages["SESSION"]:
-            self._errors.append(NotFitMessageFoundException("session"))
-            return
+        file_type: str = self._messages["FILE_ID"][0].file_type
 
-        supported: list[str] = [n for k, v in SPORTS.items() for n in v.keys()]
-        not_supported: list[str] = [
-            s for s in self._messages["SESSION"] if s.sport not in supported
-        ]
+        if file_type not in FIT_FILE_SUPPORTED.keys():
+            self._errors.append(NotSupportedFitFileException(file_type))
+            return FitError(self._fit_file_path, self._errors)
 
-        if not_supported:
-            self._errors.append(
-                NotSupportedFitSportException(not_supported[0].sport, not_supported[0].sub_sport)
-            )
-
-    def _build_activity(self) -> FitActivity | None:
-        workout_mesg: FitWorkoutMesg = (
-            self._messages["WORKOUT"][0] if self._messages["WORKOUT"] else None
+        parser = FIT_FILE_SUPPORTED[file_type]["parser_cls"](
+            fit_file_path=self._fit_file_path,
+            messages=self._messages
         )
-        workout_step_mesgs: List[FitWorkoutStepMesg] = self._messages["WORKOUT_STEP"]
-
-        if len(self._messages["SESSION"]) > 1:
-            return FitMultisportActivity(
-                sessions=self._messages["SESSION"],
-                records=self._messages["RECORD"],
-                laps=self._messages["LAP"]
-            )
-
-        session_mesg: FitSessionMesg = self._messages["SESSION"][0]
-
-        if is_distance_sport(session_mesg.sport):
-            return FitDistanceActivity(
-                session=session_mesg,
-                records=self._messages["RECORD"],
-                laps=self._messages["LAP"],
-                workout=workout_mesg,
-                workout_steps=workout_step_mesgs
-            )
-
-        if is_climb_sport(session_mesg.sport):
-            return FitClimbActivity(
-                session=session_mesg,
-                splits=self._messages["SPLIT"],
-                workout=workout_mesg,
-                workout_steps=workout_step_mesgs
-            )
-
-        if is_set_sport(session_mesg.sport):
-            return FitSetActivity(
-                session=session_mesg,
-                sets=self._messages["SET"],
-                workout=workout_mesg,
-                workout_steps=workout_step_mesgs
-            )
-
-        return None
-
-    def has_errors(self) -> bool:
-        return len(self._errors) != 0
-
-    def get_errors(self) -> list[Exception]:
-        return self._errors
-
-    def get_messages(self) -> dict[str, list]:
-        return self._messages
-
-    def get_activity(self) -> FitActivity | None:
-        return self._activity
+        return parser.parse()
 
     def _mesg_listener(self, mesg_num: int, mesg: dict) -> None:
         if self._has_critical_error:

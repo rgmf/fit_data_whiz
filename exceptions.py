@@ -24,3 +24,8 @@ class UncompleteMessageException(FitException):
             f"Uncomplete data to build '{message_name}' "
             f"message: {', '.join([str(n) for n in values])}"
         )
+
+
+class UnexpectedDataMessageException(FitException):
+    def __init__(self, message_name: str, description: str):
+        super().__init__(f"Unexpected data for '{message_name}' message: {description}")

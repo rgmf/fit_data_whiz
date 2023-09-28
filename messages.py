@@ -55,8 +55,8 @@ class FitFileIdMesg(FitMesg):
         if not self.can_build_mesg(d):
             raise UncompleteMessageException("file_id", list(d.keys()))
 
-        if d["file_type"].lower() != "activity":
-            raise NotSupportedFitFileException(d["file_type"])
+        # if d["file_type"].lower() != "activity":
+        #     raise NotSupportedFitFileException(d["file_type"])
 
         for attr in self.__slots__:
             if attr in d:
@@ -629,6 +629,135 @@ class FitWorkoutStepMesg(FitMesg):
 
         if not self.can_build_mesg(d):
             raise UncompleteMessageException("workout", list(d.keys()))
+
+        for attr in self.__slots__:
+            if attr in d:
+                setattr(self, attr, d[attr])
+            else:
+                setattr(self, attr, None)
+
+
+class FitMonitoringInfoMesg(FitMesg):
+    __slots__ = (
+        "timestamp",              # datetime
+        "local_timestamp",        # int
+        "activity_type",          # list[str]
+        "cycles_to_distance",     # list[float]
+        "cycles_to_calories",     # list[float]
+        "resting_metabolic_rate"  # int
+    )
+
+    def __init__(self, d: dict):
+        self.needed_attrs = ["timestamp"]
+
+        if not self.can_build_mesg(d):
+            raise UncompleteMessageException("monitoring_info", list(d.keys()))
+
+        for attr in self.__slots__:
+            if attr in d:
+                setattr(self, attr, d[attr])
+            else:
+                setattr(self, attr, None)
+
+
+class FitMonitoringMesg(FitMesg):
+    __slots__ = (
+        "timestamp",                        # datetime
+        # "device_index",
+        "calories",                         # int
+        "distance",                         # float
+        "cycles",                           # float
+        "steps",                            # int
+        "strokes",                          # int
+        "active_time",                      # float (seconds)
+        "activity_type",                    # str
+        "activity_subtype",                 # str
+        "activity_level",                   # str (low, medium, high)
+        "distance_16",                      # int
+        "cycles_16",                        # int
+        "active_time_16",                   # int
+        "local_timestamp",                  # int
+        "temperature",                      # int
+        "temperature_min",                  # int
+        "temperature_max",                  # int
+        "activity_time",                    # int
+        "active_calories",                  # int
+        "current_activity_type_intensity",  # int
+        "timestamp_min_8",                  # int
+        "timestamp_16",                     # int
+        "heart_rate",                       # int
+        "intensity",                        # int
+        "duration_min",                     # int (minutes)
+        "duration",                         # int (seconds)
+        "ascent",                           # float
+        "descent",                          # float
+        "moderate_activity_minutes",        # int
+        "vigorous_activity_minutes"         # int
+    )
+
+    def __init__(self, d: dict):
+        self.needed_attrs = []
+
+        if not self.can_build_mesg(d):
+            raise UncompleteMessageException("monitoring", list(d.keys()))
+
+        for attr in self.__slots__:
+            if attr in d:
+                setattr(self, attr, d[attr])
+            else:
+                setattr(self, attr, None)
+
+
+class FitMonitoringHrDataMesg(FitMesg):
+    __slots__ = (
+        "timestamp",                      # datetime
+        "resting_heart_rate",             # int
+        "current_day_resting_heart_rate"  # int
+    )
+
+    def __init__(self, d: dict):
+        self.needed_attrs = ["timestamp", "resting_heart_rate", "current_day_resting_heart_rate"]
+
+        if not self.can_build_mesg(d):
+            raise UncompleteMessageException("monitoring_hr_data", list(d.keys()))
+
+        for attr in self.__slots__:
+            if attr in d:
+                setattr(self, attr, d[attr])
+            else:
+                setattr(self, attr, None)
+
+
+class FitStressLevelMesg(FitMesg):
+    __slots__ = (
+        "stress_level_value",  # int
+        "stress_level_time"    # datetime
+    )
+
+    def __init__(self, d: dict):
+        self.needed_attrs = ["stress_level_value", "stress_level_time"]
+
+        if not self.can_build_mesg(d):
+            raise UncompleteMessageException("stress_level", list(d.keys()))
+
+        for attr in self.__slots__:
+            if attr in d:
+                setattr(self, attr, d[attr])
+            else:
+                setattr(self, attr, None)
+
+
+class FitRespirationRateMesg(FitMesg):
+    __slots__ = (
+        "timestamp",        # datetime
+        "respiration_rate"  # float (breaths/min)
+    )
+
+    def __init__(self, d: dict):
+        self.needed_attrs = ["timestamp", "respiration_rate"]
+
+        if not self.can_build_mesg(d):
+            raise UncompleteMessageException("respiration_rate", list(d.keys()))
 
         for attr in self.__slots__:
             if attr in d:
