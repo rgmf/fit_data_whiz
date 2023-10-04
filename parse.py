@@ -7,7 +7,7 @@ from .definitions import MESSAGES
 from .exceptions import FitException, NotFitMessageFoundException, NotSupportedFitFileException
 from .custom_logging import LogLevel
 from .parsers.results.result import FitResult, FitError
-from .parsers.parser import FitActivityParser, FitMonitoringParser, FitSleepParser
+from .parsers.parser import FitActivityParser, FitMonitoringParser, FitHrvParser, FitSleepParser
 
 # Initialize logger system.
 initialize(LogLevel.DEBUG)
@@ -32,6 +32,12 @@ FIT_FILE_SUPPORTED = {
         "num": 32,
         "parser_cls": FitMonitoringParser,
         "description": "Monitoring FIT file with steps, stress level... data"
+    },
+    68: {
+        "name": 68,
+        "num": 68,
+        "parser_cls": FitHrvParser,
+        "description": "FIT file with HRV data"
     },
     49: {
         "name": 49,

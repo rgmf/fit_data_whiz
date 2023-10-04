@@ -764,3 +764,51 @@ class FitRespirationRateMesg(FitMesg):
                 setattr(self, attr, d[attr])
             else:
                 setattr(self, attr, None)
+
+
+class FitHrvStatusSummaryMesg(FitMesg):
+    __slots__ = (
+        "timestamp",                # datetime
+        "weekly_average",           # float
+        "last_night_average",       # float
+        "last_night_5_min_high",    # float
+        "baseline_low_upper",       # float
+        "baseline_balanced_lower",  # float
+        "baseline_balanced_upper",  # float
+        "status"                    # str | int (HRV_STATUS in definitions)
+    )
+
+    def __init__(self, d: dict):
+        self.needed_attrs = [
+            "timestamp", "weekly_average", "last_night_average", "last_night_5_min_high",
+            "baseline_low_upper", "baseline_balanced_lower", "baseline_balanced_upper",
+            "status"
+        ]
+
+        if not self.can_build_mesg(d):
+            raise UncompleteMessageException("hrv_status_summary", list(d.keys()))
+
+        for attr in self.__slots__:
+            if attr in d:
+                setattr(self, attr, d[attr])
+            else:
+                setattr(self, attr, None)
+
+
+class FitHrvValueMesg(FitMesg):
+    __slots__ = (
+        "timestamp",  # datetime
+        "value"       # int (in ms - 5 minute RMSSD)
+    )
+
+    def __init__(self, d: dict):
+        self.needed_attrs = ["timestamp"]
+
+        if not self.can_build_mesg(d):
+            raise UncompleteMessageException("hrv_value", list(d.keys()))
+
+        for attr in self.__slots__:
+            if attr in d:
+                setattr(self, attr, d[attr])
+            else:
+                setattr(self, attr, None)

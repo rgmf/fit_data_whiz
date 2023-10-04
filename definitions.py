@@ -13,7 +13,9 @@ from .messages import (
     FitStressLevelMesg,
     FitRespirationRateMesg,
     FitMonitoringInfoMesg,
-    FitMonitoringMesg
+    FitMonitoringMesg,
+    FitHrvStatusSummaryMesg,
+    FitHrvValueMesg
 )
 
 
@@ -127,12 +129,12 @@ MESSAGES = {
     "HRV_STATUS_SUMMARY": {
         "name": "HRV_STATUS_SUMMARY",
         "num": 370,
-        "mesg_cls": None
+        "mesg_cls": FitHrvStatusSummaryMesg
     },
     "HRV_VALUE": {
         "name": "HRV_VALUE",
         "num": 371,
-        "mesg_cls": None
+        "mesg_cls": FitHrvValueMesg
     }
 }
 
@@ -264,6 +266,14 @@ ACTIVITY_TYPES = {
     254: "all"
 }
 ACTIVITY_TYPE_UNKNOWN = "unknown"
+
+HRV_STATUS = {
+    0: "none",
+    1: "poor",
+    2: "low",
+    3: "unbalanced",
+    4: "balanced"
+}
 
 
 def is_distance_sport(sport: str) -> bool:

@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 
 from .results.result import FitResult, FitError
-from ..utils.garmin_sdk_utils import is_daily_log
 from .results.stats import (
     FitActivity,
     FitMultisportActivity,
@@ -13,7 +12,8 @@ from .results.stats import (
     FitStressLevel,
     FitHrData,
     FitRespirationRate,
-    FitMonitor
+    FitMonitor,
+    FitHrv
 )
 from ..definitions import SPORTS, is_distance_sport, is_climb_sport, is_set_sport
 from ..exceptions import (
@@ -141,7 +141,7 @@ class FitMonitoringParser(FitAbstractParser):
                 [
                     UnexpectedDataMessageException(
                         "monitoring_info",
-                        f"expected one message per file but got {len(self._messages['monitoring_info'])} messages"
+                        f"expected one message per file but got {len(self._messages['MONITORING_INFO'])} messages"
                     )
                 ]
             )
@@ -165,6 +165,32 @@ class FitMonitoringParser(FitAbstractParser):
         )
 
         return FitMonitor(monitoring_info, monitorings, hr_datas, stress_levels, respiration_rates)
+
+
+class FitHrvParser(FitAbstractParser):
+    def __init__(self, fit_file_path: str, messages: dict[str, list]) -> None:
+        self._fit_file_path: str = fit_file_path
+        self._messages: dict[str, list] = messages
+
+    def parse(self) -> FitResult:
+        if "HRV_STATUS_SUMMARY" not in self._messages:
+            return FitError(self._fit_file_path, [NotFitMessageFoundException("hrv_status_summary")])
+
+        if "HRV_VALUE" not in self._messages:
+            return FitError(self._fit_file_path, [NotFitMessageFoundException("hrv_value")])
+
+        if len(self._messages["HRV_STATUS_SUMMARY"]) != 1:
+            return FitError(
+                self._fit_file_path,
+                [
+                    UnexpectedDataMessageException(
+                        "hrv_status_summary",
+                        f"expected one message per file but got {len(self._messages['HRV_STATUS_SUMMARY'])} messages"
+                    )
+                ]
+            )
+
+        return FitHrv(self._messages["HRV_STATUS_SUMMARY"][0], self._messages["HRV_VALUE"])
 
 
 class FitSleepParser(FitAbstractParser):

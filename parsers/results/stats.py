@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, date, time
 from dataclasses import dataclass, field
 from collections import namedtuple
 from typing import List
+
 from .result import FitResult
 
 from ...utils.date_utils import try_to_compute_local_datetime
@@ -18,15 +19,16 @@ from ...messages import (
     FitMonitoringHrDataMesg,
     FitMonitoringInfoMesg,
     FitStressLevelMesg,
-    FitRespirationRateMesg
+    FitRespirationRateMesg,
+    FitHrvStatusSummaryMesg,
+    FitHrvValueMesg
 )
 from ...definitions import (
     SplitType,
     ClimbResult,
     TRANSITION_SPORT,
     is_distance_sport,
-    ACTIVITY_TYPES,
-    ACTIVITY_TYPE_UNKNOWN
+    HRV_STATUS
 )
 
 
@@ -562,3 +564,34 @@ class FitMonitor(FitResult):
     @property
     def total_calories(self) -> int:
         return self.metabolic_calories + self.active_calories
+
+
+FitHrvValue = namedtuple("FitHrvValue", ["datetime_utc", "value"])
+
+
+@dataclass
+class FitHrv(FitResult):
+    datetime_utc: datetime
+    weekly_average: float
+    last_night_average: float
+    last_night_5_min_high: float
+    baseline_low_upper: float
+    baseline_balanced_lower: float
+    baseline_balanced_upper: float
+    status: str
+    values: list[FitHrvValue]
+
+    def __init__(self, summary: FitHrvStatusSummaryMesg, values: list[FitHrvValueMesg]) -> None:
+        self.datetime_utc = summary.timestamp
+        self.weekly_average = summary.weekly_average
+        self.last_night_average = summary.last_night_average
+        self.last_night_5_min_high = summary.last_night_5_min_high
+        self.baseline_low_upper = summary.baseline_low_upper
+        self.baseline_balanced_lower = summary.baseline_balanced_lower
+        self.baseline_balanced_upper = summary.baseline_balanced_upper
+        self.status = (
+            summary.status
+            if isinstance(summary.status, str)
+            else (HRV_STATUS[summary.status] if summary.status in HRV_STATUS else HRV_STATUS[0])
+        )
+        self.values = [FitHrvValue(v.timestamp, v.value) for v in values if v.value is not None]
