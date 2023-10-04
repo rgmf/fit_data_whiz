@@ -15,7 +15,9 @@ from .messages import (
     FitMonitoringInfoMesg,
     FitMonitoringMesg,
     FitHrvStatusSummaryMesg,
-    FitHrvValueMesg
+    FitHrvValueMesg,
+    FitSleepLevelMesg,
+    FitSleepAssessmentMesg
 )
 
 
@@ -119,12 +121,12 @@ MESSAGES = {
     "SLEEP_LEVEL": {
         "name": "SLEEP_LEVEL",
         "num": 275,
-        "mesg_cls": None
+        "mesg_cls": FitSleepLevelMesg
     },
     "SLEEP_ASSESSMENT": {
         "name": "SLEEP_ASSESSMENT",
         "num": 346,
-        "mesg_cls": None
+        "mesg_cls": FitSleepAssessmentMesg
     },
     "HRV_STATUS_SUMMARY": {
         "name": "HRV_STATUS_SUMMARY",
@@ -273,6 +275,14 @@ HRV_STATUS = {
     2: "low",
     3: "unbalanced",
     4: "balanced"
+}
+
+SLEEP_LEVEL = {
+    0: "unmeasurable",
+    1: "awake",
+    2: "light",
+    3: "deep",
+    4: "rem"
 }
 
 

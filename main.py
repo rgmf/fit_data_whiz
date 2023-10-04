@@ -26,9 +26,9 @@ MESSAGES = [
     # "SESSION",
     # "ACTIVITY",
 
-    "HRV",
-    "HRV_STATUS_SUMMARY",
-    "HRV_VALUE",
+    # "HRV",
+    # "HRV_STATUS_SUMMARY",
+    # "HRV_VALUE",
 
     # "MONITORING_INFO",
     # "MONITORING",
@@ -36,11 +36,11 @@ MESSAGES = [
     # "STRESS_LEVEL",
     # "RESPIRATION_RATE",
 
-    # "SLEEP_LEVEL",
-    # "SLEEP_ASSESSMENT"
+    "SLEEP_LEVEL",
+    "SLEEP_ASSESSMENT"
 ]
 
-root_path: str = "assets/fenix6s_all_files_after_garmin_connect_descon/HRVStatus"
+root_path: str = "assets/fenix6s_all_files_after_garmin_connect_descon/Sleep"
 messages = []
 
 

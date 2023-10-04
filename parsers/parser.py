@@ -13,7 +13,8 @@ from .results.stats import (
     FitHrData,
     FitRespirationRate,
     FitMonitor,
-    FitHrv
+    FitHrv,
+    FitSleep
 )
 from ..definitions import SPORTS, is_distance_sport, is_climb_sport, is_set_sport
 from ..exceptions import (
@@ -199,4 +200,21 @@ class FitSleepParser(FitAbstractParser):
         self._messages: dict[str, list] = messages
 
     def parse(self) -> FitResult:
-       pass
+        if "SLEEP_ASSESSMENT" not in self._messages:
+            return FitError(self._fit_file_path, [NotFitMessageFoundException("sleep_assessment")])
+
+        if "SLEEP_LEVEL" not in self._messages:
+            return FitError(self._fit_file_path, [NotFitMessageFoundException("sleep_level")])
+
+        if len(self._messages["SLEEP_ASSESSMENT"]) != 1:
+            return FitError(
+                self._fit_file_path,
+                [
+                    UnexpectedDataMessageException(
+                        "sleep_assessment",
+                        f"expected one message per file but got {len(self._messages['SLEEP_ASSESSMENT'])} messages"
+                    )
+                ]
+            )
+
+        return FitSleep(self._messages["SLEEP_ASSESSMENT"][0], self._messages["SLEEP_LEVEL"])

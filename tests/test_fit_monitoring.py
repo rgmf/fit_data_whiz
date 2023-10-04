@@ -5,7 +5,7 @@ from ..parsers.results.result import FitResult
 from ..parsers.results.stats import FitMonitor, FitMonitoringInfo
 
 
-def monitoring(path_file: str) -> None:
+def assert_monitoring_data(path_file: str) -> None:
     fit_parse: FitParser = FitParser(path_file)
     monitor: FitResult = fit_parse.parse()
 
@@ -41,20 +41,42 @@ def monitoring(path_file: str) -> None:
     assert monitor.resting_heart_rate is not None
     assert len(monitor.respiration_rates) > 0
     assert len(monitor.stress_levels) > 0
+    assert isinstance(monitor.activity_intensities, list)
 
 
-def test_monitoring():
-    monitoring("tests/files/monitor1_with_all.fit")
-    monitoring("tests/files/monitor2_with_all.fit")
-    # monitoring("tests/files/monitor2/M9R00000.FIT")
-    # monitoring("tests/files/monitor2/M9RB3400.FIT")
-    # monitoring("tests/files/monitor2/M9S00000.FIT")
-    # monitoring("tests/files/monitor2/M9SC0715.FIT")
-    # monitoring("tests/files/monitor2/M9T00000.FIT")
-    # monitoring("tests/files/monitor2/M9U00000.FIT")
-    # monitoring("tests/files/monitor2/MA100000.FIT")
-    # monitoring("tests/files/monitor2/MA1A1222.FIT")
-    # monitoring("tests/files/monitor2/MA1B5812.FIT")
-    # monitoring("tests/files/monitor2/MA200000.FIT")
-    # monitoring("tests/files/monitor2/MA300000.FIT")
-    # monitoring("tests/files/monitor2/MA3C0247.FIT")
+def assert_activity_intensities(path_file: str, moderate_min: int, vigorous_min: int) -> None:
+    fit_parse: FitParser = FitParser(path_file)
+    monitor: FitMonitor = fit_parse.parse()
+
+    assert sum([m.moderate for m in monitor.activity_intensities]) == moderate_min
+    assert sum([m.vigorous for m in monitor.activity_intensities]) == vigorous_min
+
+
+def test_monitoring_with_all():
+    assert_monitoring_data("tests/files/monitor1_with_all.fit")
+    assert_monitoring_data("tests/files/monitor2_with_all.fit")
+    # assert_monitoring_data("tests/files/monitor2/M9R00000.FIT")
+    # assert_monitoring_data("tests/files/monitor2/M9RB3400.FIT")
+    # assert_monitoring_data("tests/files/monitor2/M9S00000.FIT")
+    # assert_monitoring_data("tests/files/monitor2/M9SC0715.FIT")
+    # assert_monitoring_data("tests/files/monitor2/M9T00000.FIT")
+    # assert_monitoring_data("tests/files/monitor2/M9U00000.FIT")
+    # assert_monitoring_data("tests/files/monitor2/MA100000.FIT")
+    # assert_monitoring_data("tests/files/monitor2/MA1A1222.FIT")
+    # assert_monitoring_data("tests/files/monitor2/MA1B5812.FIT")
+    # assert_monitoring_data("tests/files/monitor2/MA200000.FIT")
+    # assert_monitoring_data("tests/files/monitor2/MA300000.FIT")
+    # assert_monitoring_data("tests/files/monitor2/MA3C0247.FIT")
+
+
+def test_activity_intensities():
+    assert_activity_intensities(
+        "tests/files/monitor1_with_all.fit",
+        moderate_min=0,
+        vigorous_min=0
+    )
+    assert_activity_intensities(
+        "tests/files/monitor_with_intensities.fit",
+        moderate_min=26,
+        vigorous_min=2
+    )

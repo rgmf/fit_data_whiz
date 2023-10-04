@@ -812,3 +812,61 @@ class FitHrvValueMesg(FitMesg):
                 setattr(self, attr, d[attr])
             else:
                 setattr(self, attr, None)
+
+
+class FitSleepAssessmentMesg(FitMesg):
+    __slots__ = (
+        "combined_awake_score",         # int
+        "awake_time_score",             # int
+        "awakenings_count_score",       # int
+        "deep_sleep_score",             # int
+        "sleep_duration_score",         # int
+        "light_sleep_score",            # int
+        "overall_sleep_score",          # int
+        "sleep_quality_score",          # int
+        "sleep_recovery_score",         # int
+        "rem_sleep_score",              # int
+        "sleep_restlessness_score",     # int
+        "awakenings_count",             # int
+        "interruptions_score",          # int
+        "average_stress_during_sleep",  # float
+    )
+
+    def __init__(self, d: dict):
+        self.needed_attrs = [
+            "combined_awake_score", "awake_time_score",
+            "awakenings_count_score", "deep_sleep_score",
+            "sleep_duration_score", "light_sleep_score",
+            "overall_sleep_score", "sleep_quality_score",
+            "sleep_recovery_score", "rem_sleep_score",
+            "sleep_restlessness_score", "awakenings_count",
+            "interruptions_score", "average_stress_during_sleep"
+        ]
+
+        if not self.can_build_mesg(d):
+            raise UncompleteMessageException("sleep_assessment", list(d.keys()))
+
+        for attr in self.__slots__:
+            if attr in d:
+                setattr(self, attr, d[attr])
+            else:
+                setattr(self, attr, None)
+
+
+class FitSleepLevelMesg(FitMesg):
+    __slots__ = (
+        "timestamp",   # datetime
+        "sleep_level"  # str | int (SLEEP_LEVEL in definitions)
+    )
+
+    def __init__(self, d: dict):
+        self.needed_attrs = ["timestamp"]
+
+        if not self.can_build_mesg(d):
+            raise UncompleteMessageException("hrv_value", list(d.keys()))
+
+        for attr in self.__slots__:
+            if attr in d:
+                setattr(self, attr, d[attr])
+            else:
+                setattr(self, attr, None)

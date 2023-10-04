@@ -21,14 +21,17 @@ from ...messages import (
     FitStressLevelMesg,
     FitRespirationRateMesg,
     FitHrvStatusSummaryMesg,
-    FitHrvValueMesg
+    FitHrvValueMesg,
+    FitSleepAssessmentMesg,
+    FitSleepLevelMesg
 )
 from ...definitions import (
     SplitType,
     ClimbResult,
     TRANSITION_SPORT,
     is_distance_sport,
-    HRV_STATUS
+    HRV_STATUS,
+    SLEEP_LEVEL
 )
 
 
@@ -81,7 +84,7 @@ class FitLap:
     start_location: LocationStat
     end_location: LocationStat
 
-    def __init__(self, lap: FitLapMesg):
+    def __init__(self, lap: FitLapMesg) -> None:
         self.message_index = lap.message_index
         self.timestamp = lap.timestamp
         self.time = TimeStat(
@@ -121,7 +124,7 @@ class FitSet:
     weight: float
     weight_unit: str
 
-    def __init__(self, set_mesg: FitSetMesg):
+    def __init__(self, set_mesg: FitSetMesg) -> None:
         self.order = set_mesg.message_index
         self.excercise = set_mesg.category[0] if set_mesg.category else set_mesg.set_type
         self.time = TimeStat(
@@ -144,7 +147,7 @@ class FitClimb:
     difficulty: int
     result: ClimbResult
 
-    def __init__(self, split: FitSplitMesg):
+    def __init__(self, split: FitSplitMesg) -> None:
         self.time = TimeStat(
             timestamp=split.start_time,
             start_time=split.start_time,
@@ -168,7 +171,7 @@ class FitClimb:
 class FitWorkoutStep:
     message_index: int
 
-    def __init__(self, step: FitWorkoutStepMesg):
+    def __init__(self, step: FitWorkoutStepMesg) -> None:
         self.message_index = step.message_index
 
 
@@ -178,7 +181,7 @@ class FitWorkout:
     sport: str
     steps: List[FitWorkoutStep]
 
-    def __init__(self, workout: FitWorkoutMesg, steps: List[FitWorkoutStepMesg]):
+    def __init__(self, workout: FitWorkoutMesg, steps: List[FitWorkoutStepMesg]) -> None:
         self.name = workout.wkt_name
         self.sport = workout.sport
         self.steps = [FitWorkoutStep(s) for s in steps]
@@ -200,7 +203,7 @@ class FitActivity(FitResult):
             session: FitSessionMesg,
             workout: FitWorkoutMesg | None = None,
             workout_steps: List[FitWorkoutStepMesg] = []
-    ):
+    ) -> None:
         self.name = session.sport
         self.sport = session.sport
         self.sub_sport = session.sub_sport
@@ -238,7 +241,7 @@ class FitDistanceActivity(FitActivity):
             laps: List[FitLapMesg],
             workout: FitWorkoutMesg | None = None,
             workout_steps: List[FitWorkoutStepMesg] = []
-    ):
+    ) -> None:
         super().__init__(session, workout, workout_steps)
 
         altitudes: list[float] = [
@@ -283,7 +286,7 @@ class FitClimbActivity(FitActivity):
             splits: List[FitSplitMesg],
             workout: FitWorkoutMesg | None = None,
             workout_steps: List[FitWorkoutStepMesg] = []
-    ):
+    ) -> None:
         super().__init__(session, workout, workout_steps)
         self.climbs = [FitClimb(s) for s in splits]
 
@@ -298,14 +301,14 @@ class FitSetActivity(FitActivity):
             sets: List[FitSetMesg],
             workout: FitWorkoutMesg | None = None,
             workout_steps: List[FitWorkoutStepMesg] = []
-    ):
+    ) -> None:
         super().__init__(session, workout, workout_steps)
         self.sets = [FitSet(s) for s in sets]
 
 
 @dataclass
 class FitTransitionActivity(FitActivity):
-    def __init__(self, session: FitSessionMesg):
+    def __init__(self, session: FitSessionMesg) -> None:
         super().__init__(session)
         self.name = "Transition"
 
@@ -316,7 +319,7 @@ class FitMultisportActivity:
 
     def __init__(
         self, sessions: List[FitSessionMesg], records: List[FitRecordMesg], laps: List[FitLapMesg]
-    ):
+    ) -> None:
         self.fit_activities = []
 
         for session in sessions:
@@ -342,7 +345,7 @@ class FitMonitoringInfo:
     activities: list[str]
     resting_metabolic_rate: int | None = None
 
-    def __init__(self, mesg: FitMonitoringInfoMesg):
+    def __init__(self, mesg: FitMonitoringInfoMesg) -> None:
         self.datetime_utc = mesg.timestamp
 
         datetime_local: datetime = try_to_compute_local_datetime(self.datetime_utc)
@@ -380,7 +383,7 @@ class FitMonitoring:
     moderate_activity_minutes: int | None
     vigorous_activity_minutes: int | None
 
-    def __init__(self, mesg: FitMonitoringMesg):
+    def __init__(self, mesg: FitMonitoringMesg) -> None:
         self.datetime_utc = mesg.timestamp
 
         if self.datetime_utc is not None:
@@ -426,6 +429,15 @@ class FitMonitoring:
     def is_heart_rate(self) -> bool:
         return self.heart_rate is not None and self.seconds_from_datetime_utc is not None
 
+    def is_activity_intensity(self) -> bool:
+        return (
+            self.seconds_from_datetime_utc is not None and
+            (
+                self.moderate_activity_minutes is not None or
+                self.vigorous_activity_minutes is not None
+            )
+        )
+
     def has_steps(self) -> bool:
         return self.steps is not None and self.steps != 0
 
@@ -436,7 +448,7 @@ class FitHrData:
     resting_heart_rate: int
     current_day_resting_heart_rate: int
 
-    def __init__(self, mesg: FitMonitoringHrDataMesg):
+    def __init__(self, mesg: FitMonitoringHrDataMesg) -> None:
         self.datetime_utc = mesg.timestamp
         self.resting_heart_rate = mesg.resting_heart_rate
         self.current_day_resting_heart_rate = mesg.current_day_resting_heart_rate
@@ -450,7 +462,7 @@ class FitStressLevel:
     datetime_utc: datetime
     value: int
 
-    def __init__(self, mesg: FitStressLevelMesg):
+    def __init__(self, mesg: FitStressLevelMesg) -> None:
         self.datetime_utc = mesg.stress_level_time
         self.value = mesg.stress_level_value
 
@@ -460,7 +472,7 @@ class FitRespirationRate:
     datetime_utc: datetime
     respiration_rate: float
 
-    def __init__(self, mesg: FitRespirationRateMesg):
+    def __init__(self, mesg: FitRespirationRateMesg) -> None:
         self.datetime_utc = mesg.timestamp
         self.respiration_rate = mesg.respiration_rate
 
@@ -500,6 +512,22 @@ class FitHeartRate:
 
 
 @dataclass
+class FitActivityIntensity:
+    datetime_utc: datetime
+    moderate: int  # in minutes
+    vigorous: int  # in minutes
+
+    def __init__(
+            self, day_date: date, seconds_from_datetime_utc: int, moderate: int, vigorous: int
+    ) -> None:
+        self.datetime_utc = (
+            datetime.combine(day_date, time.min) + timedelta(seconds=seconds_from_datetime_utc)
+        )
+        self.moderate = moderate if moderate else 0
+        self.vigorous = vigorous if vigorous else 0
+
+
+@dataclass
 class FitMonitor(FitResult):
     monitoring_info: FitMonitoringInfo
     monitorings: list[FitMonitoring] = field(default_factory=list)
@@ -508,6 +536,7 @@ class FitMonitor(FitResult):
     resting_heart_rate: int | None = None
     respiration_rates: list[FitRespirationRate] = field(default_factory=list)
     stress_levels: list[FitStressLevel] = field(default_factory=list)
+    activity_intensities: list[FitActivityIntensity] = field(default_factory=list)
 
     def __init__(
             self,
@@ -541,6 +570,16 @@ class FitMonitor(FitResult):
             daily_log_hr_datas[0].resting_heart_rate
             if daily_log_hr_datas else None
         )
+
+        self.activity_intensities = [
+            FitActivityIntensity(
+                day_date=self.day_date,
+                seconds_from_datetime_utc=m.seconds_from_datetime_utc,
+                moderate=m.moderate_activity_minutes,
+                vigorous=m.vigorous_activity_minutes
+            )
+            for m in self.monitorings if m.is_activity_intensity()
+        ]
 
     @property
     def day_date(self) -> date:
@@ -595,3 +634,55 @@ class FitHrv(FitResult):
             else (HRV_STATUS[summary.status] if summary.status in HRV_STATUS else HRV_STATUS[0])
         )
         self.values = [FitHrvValue(v.timestamp, v.value) for v in values if v.value is not None]
+
+
+FitSleepLevel = namedtuple("FitSleepLevel", ["datetime_utc", "value"])
+
+
+@dataclass
+class FitSleep(FitResult):
+    dates: list[date]
+    combined_awake_score: int
+    awake_time_score: int
+    awakenings_count_score: int
+    deep_sleep_score: int
+    sleep_duration_score: int
+    light_sleep_score: int
+    overall_sleep_score: int
+    sleep_quality_score: int
+    sleep_recovery_score: int
+    rem_sleep_score: int
+    sleep_restlessness_score: int
+    awakenings_count: int
+    interruptions_score: int
+    average_stress_during_slee: int
+    levels: list[FitSleepLevel]
+
+    def __init__(self, assessment: FitSleepAssessmentMesg, levels: list[FitSleepLevelMesg]) -> None:
+        self.combined_awake_score = assessment.combined_awake_score
+        self.awake_time_score = assessment.awake_time_score
+        self.awakenings_count_score = assessment.awakenings_count_score
+        self.deep_sleep_score = assessment.deep_sleep_score
+        self.sleep_duration_score = assessment.sleep_duration_score
+        self.light_sleep_score = assessment.light_sleep_score
+        self.overall_sleep_score = assessment.overall_sleep_score
+        self.sleep_quality_score = assessment.sleep_quality_score
+        self.sleep_recovery_score = assessment.sleep_recovery_score
+        self.rem_sleep_score = assessment.rem_sleep_score
+        self.sleep_restlessness_score = assessment.sleep_restlessness_score
+        self.awakenings_count = assessment.awakenings_count
+        self.interruptions_score = assessment.interruptions_score
+        self.average_stress_during_sleep = assessment.average_stress_during_sleep
+
+        self.levels = ([
+            FitSleepLevel(
+                level.timestamp,
+                level.sleep_level if isinstance(level.sleep_level, str) else (
+                    SLEEP_LEVEL[level.sleep_level]
+                    if level.sleep_level in SLEEP_LEVEL else SLEEP_LEVEL[0]
+                )
+            )
+            for level in levels if level.sleep_level is not None
+        ])
+
+        self.dates = sorted(set([level.datetime_utc.date() for level in self.levels]))
