@@ -1,11 +1,11 @@
-from datetime import datetime, timedelta, date, time
+from datetime import datetime, timedelta, date
 from dataclasses import dataclass, field
 from collections import namedtuple
 from typing import List
 
 from .result import FitResult
 
-from ...utils.date_utils import try_to_compute_local_datetime
+from ...utils.date_utils import try_to_compute_local_datetime, combine_date_and_seconds
 from ...utils.garmin_sdk_utils import is_daily_log
 from ...messages import (
     FitSessionMesg,
@@ -505,9 +505,7 @@ class FitHeartRate:
     hr: int
 
     def __init__(self, day_date: date, seconds_from_datetime_utc: int, heart_rate: int) -> None:
-        self.utc_datetime = (
-            datetime.combine(day_date, time.min) + timedelta(seconds=seconds_from_datetime_utc)
-        )
+        self.utc_datetime = combine_date_and_seconds(day_date, seconds_from_datetime_utc)
         self.hr = heart_rate
 
 
@@ -520,9 +518,7 @@ class FitActivityIntensity:
     def __init__(
             self, day_date: date, seconds_from_datetime_utc: int, moderate: int, vigorous: int
     ) -> None:
-        self.datetime_utc = (
-            datetime.combine(day_date, time.min) + timedelta(seconds=seconds_from_datetime_utc)
-        )
+        self.datetime_utc = combine_date_and_seconds(day_date, seconds_from_datetime_utc)
         self.moderate = moderate if moderate else 0
         self.vigorous = vigorous if vigorous else 0
 
