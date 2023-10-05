@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from .date_utils import try_to_compute_local_datetime
+from fit_data_whiz.utils.date_utils import try_to_compute_local_datetime
 
 
 def is_daily_log(utc_dt: datetime) -> bool:

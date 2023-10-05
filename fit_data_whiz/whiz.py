@@ -2,12 +2,15 @@ import os
 
 from garmin_fit_sdk import Decoder, Stream, Profile
 
-from .custom_logging import get_logger, initialize
-from .definitions import MESSAGES
-from .exceptions import FitException, NotFitMessageFoundException, NotSupportedFitFileException
-from .custom_logging import LogLevel
-from .parsers.results.result import FitResult, FitError
-from .parsers.parser import FitActivityParser, FitMonitoringParser, FitHrvParser, FitSleepParser
+from fit_data_whiz.logging.logging import get_logger, initialize, LogLevel
+from fit_data_whiz.fit.definitions import MESSAGES
+from fit_data_whiz.fit.exceptions import (
+    FitException, NotFitMessageFoundException, NotSupportedFitFileException
+)
+from fit_data_whiz.fit.results import FitResult, FitError
+from fit_data_whiz.fit.parsers import (
+    FitActivityParser, FitMonitoringParser, FitHrvParser, FitSleepParser
+)
 
 # Initialize logger system.
 initialize(LogLevel.DEBUG)
@@ -56,13 +59,13 @@ class FitReader:
             for filename in [name for name in filenames if name.lower().endswith(".fit")]:
                 print(os.path.join(dirpath, filename))
                 fit_file_path: str = os.path.join(dirpath, filename)
-                fit_parser = FitParser(fit_file_path)
+                fit_parser = FitDataWhiz(fit_file_path)
                 fit_result: FitResult = fit_parser.parse()
                 self.fit_results[fit_file_path] = fit_result
 
 
-class FitParser:
-    """Parser for fit files.
+class FitDataWhiz:
+    """Main class for parsing fit files.
 
     It pre-parses all fit files and uses the right parser to parse the fit
     file.
@@ -121,8 +124,8 @@ class FitParser:
             return
 
         try:
-            message_object = MESSAGES[profile_name]["mesg_cls"](mesg_data)
-            self._messages[profile_name].append(message_object)
+            model = MESSAGES[profile_name]["model_cls"](**mesg_data)
+            self._messages[profile_name].append(model)
         except NotSupportedFitFileException as error:
             self._errors.append(error)
             self._has_critical_error = True

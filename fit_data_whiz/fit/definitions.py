@@ -1,23 +1,23 @@
 from enum import Enum, StrEnum
 
-from .messages import (
-    FitFileIdMesg,
-    FitLapMesg,
-    FitRecordMesg,
-    FitSessionMesg,
-    FitSetMesg,
-    FitSplitMesg,
-    FitWorkoutMesg,
-    FitWorkoutStepMesg,
-    FitMonitoringHrDataMesg,
-    FitStressLevelMesg,
-    FitRespirationRateMesg,
-    FitMonitoringInfoMesg,
-    FitMonitoringMesg,
-    FitHrvStatusSummaryMesg,
-    FitHrvValueMesg,
-    FitSleepLevelMesg,
-    FitSleepAssessmentMesg
+from fit_data_whiz.fit.models import (
+    FitFileId,
+    FitLap,
+    FitRecord,
+    FitSession,
+    FitSet,
+    FitSplit,
+    FitWorkout,
+    FitWorkoutStep,
+    FitMonitoringHrData,
+    FitStressLevel,
+    FitRespirationRate,
+    FitMonitoringInfo,
+    FitMonitoring,
+    FitHrvStatusSummary,
+    FitHrvValue,
+    FitSleepLevel,
+    FitSleepAssessment
 )
 
 
@@ -30,113 +30,113 @@ MESSAGES = {
     "FILE_ID": {
         "name": "FILE_ID",
         "num": 0,
-        "mesg_cls": FitFileIdMesg
+        "model_cls": FitFileId
     },
 
     # ACTIVITY DEFINITIONS
     # "SPORT": {
     #     "name": "SPORT",
     #     "num": 12,
-    #     "mesg_cls": FitSportMesg
+    #     "model_cls": FitSportMesg
     # },
     # "TRAINING_FILE": {
     #     "name": "TRAINING_FILE",
     #     "num": 72,
-    #     "mesg_cls": None
+    #     "model_cls": None
     # },
     "WORKOUT": {
         "name": "WORKOUT",
         "num": 26,
-        "mesg_cls": FitWorkoutMesg
+        "model_cls": FitWorkout
     },
     "WORKOUT_STEP": {
         "name": "WORKOUT_STEP",
         "num": 27,
-        "mesg_cls": FitWorkoutStepMesg
+        "model_cls": FitWorkoutStep
     },
     "RECORD": {
         "name": "RECORD",
         "num": 20,
-        "mesg_cls": FitRecordMesg
+        "model_cls": FitRecord
     },
     "LAP": {
         "name": "LAP",
         "num": 19,
-        "mesg_cls": FitLapMesg
+        "model_cls": FitLap
     },
     "SET": {
         "name": "SET",
         "num": 225,
-        "mesg_cls": FitSetMesg
+        "model_cls": FitSet
     },
     "SPLIT": {
         "name": "SPLIT",
         "num": 312,
-        "mesg_cls": FitSplitMesg
+        "model_cls": FitSplit
     },
     # "TIME_IN_ZONE": {
     #     "name": "TIME_IN_ZONE",
     #     "num": 216,
-    #     "mesg_cls": None
+    #     "model_cls": None
     # },
     "SESSION": {
         "name": "SESSION",
         "num": 18,
-        "mesg_cls": FitSessionMesg
+        "model_cls": FitSession
     },
     # "ACTIVITY": {
     #     "name": "ACTIVITY",
     #     "num": 34,
-    #     "mesg_cls": None
+    #     "model_cls": None
     # }
 
     # MONITOR DEFINITIONS
     "MONITORING_INFO": {
         "name": "MONITORING_INFO",
         "num": 103,
-        "mesg_cls": FitMonitoringInfoMesg
+        "model_cls": FitMonitoringInfo
     },
     "MONITORING": {
         "name": "MONITORING",
         "num": 55,
-        "mesg_cls": FitMonitoringMesg
+        "model_cls": FitMonitoring
     },
     "MONITORING_HR_DATA": {
         "name": "MONITORING_HR_DATA",
         "num": 211,
-        "mesg_cls": FitMonitoringHrDataMesg
+        "model_cls": FitMonitoringHrData
     },
     "STRESS_LEVEL": {
         "name": "STRESS_LEVEL",
         "num": 227,
-        "mesg_cls": FitStressLevelMesg
+        "model_cls": FitStressLevel
     },
     "RESPIRATION_RATE": {
         "name": "RESPIRATION_RATE",
         "num": 297,
-        "mesg_cls": FitRespirationRateMesg
+        "model_cls": FitRespirationRate
     },
 
     # SLEEP AND HRV DEFINITIONS
     "SLEEP_LEVEL": {
         "name": "SLEEP_LEVEL",
         "num": 275,
-        "mesg_cls": FitSleepLevelMesg
+        "model_cls": FitSleepLevel
     },
     "SLEEP_ASSESSMENT": {
         "name": "SLEEP_ASSESSMENT",
         "num": 346,
-        "mesg_cls": FitSleepAssessmentMesg
+        "model_cls": FitSleepAssessment
     },
     "HRV_STATUS_SUMMARY": {
         "name": "HRV_STATUS_SUMMARY",
         "num": 370,
-        "mesg_cls": FitHrvStatusSummaryMesg
+        "model_cls": FitHrvStatusSummary
     },
     "HRV_VALUE": {
         "name": "HRV_VALUE",
         "num": 371,
-        "mesg_cls": FitHrvValueMesg
+        "model_cls": FitHrvValue
     }
 }
 

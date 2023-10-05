@@ -2,7 +2,7 @@ import logging
 import sys
 from enum import IntEnum
 
-APP_ID = "my_fit_parser"
+APP_ID = "fit_data_whiz"
 
 
 class LogLevel(IntEnum):

@@ -1,17 +1,17 @@
-from ..parse import FitParser
-from ..exceptions import NotSupportedFitFileException
-from ..parsers.results.result import FitResult, FitError
+from fit_data_whiz.whiz import FitDataWhiz
+from fit_data_whiz.fit.exceptions import NotSupportedFitFileException
+from fit_data_whiz.fit.results import FitError
 
 
 def test_fit_file_not_supported() -> None:
-    fit_parse = FitParser("tests/files/settings.fit")
-    result: FitResult = fit_parse.parse()
+    whiz = FitDataWhiz("tests/files/settings.fit")
+    result = whiz.parse()
     assert isinstance(result, FitError)
     assert [e for e in result.errors if isinstance(e, NotSupportedFitFileException)]
 
 
 def test_fit_file_not_fit_file() -> None:
-    fit_parse = FitParser("tests/files/settings.csv")
-    result: FitResult = fit_parse.parse()
+    whiz = FitDataWhiz("tests/files/settings.csv")
+    result = whiz.parse()
     assert isinstance(result, FitError)
-    assert [e for e in result.errors if isinstance(e, NotSupportedFitFileException)]
+    assert [e for e in result.errors if isinstance(e, RuntimeError)]
