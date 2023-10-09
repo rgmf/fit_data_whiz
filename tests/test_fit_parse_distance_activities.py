@@ -1,8 +1,8 @@
 import pytest
 from datetime import datetime
 
-from ..parse import FitParser
-from ..definitions import (
+from fit_data_whiz.whiz import FitDataWhiz
+from fit_data_whiz.fit.definitions import (
     RUNNING_SPORT,
     WALKING_SPORT,
     HIKING_SPORT,
@@ -12,19 +12,27 @@ from ..definitions import (
     ROAD_SUB_SPORT,
     MOUNTAIN_SUB_SPORT
 )
-from ..parsers.results.stats import FitActivity, FitDistanceActivity
-from ..parsers.results.result import FitResult, FitError
+from fit_data_whiz.fit.results import (
+    FitResult,
+    FitError,
+    FitActivity,
+    FitDistanceActivity
+)
 
 
-def assert_parse_without_errors(path_file: str) -> FitResult:
-    fit_parse = FitParser(path_file)
-    activity: FitResult = fit_parse.parse()
+def assert_parse_without_errors(path_file: str) -> FitDistanceActivity:
+    whiz = FitDataWhiz(path_file)
+    activity: FitDistanceActivity = whiz.parse()
     assert not isinstance(activity, FitError)
+    assert isinstance(activity, FitResult)
     assert isinstance(activity, FitActivity)
+    assert isinstance(activity, FitDistanceActivity)
     return activity
 
 
-def assert_sport(activity: FitActivity, expected_sport: str, expected_sub_sport: str) -> None:
+def assert_sport(
+        activity: FitDistanceActivity, expected_sport: str, expected_sub_sport: str
+) -> None:
     assert activity.sport == expected_sport
     assert activity.sub_sport == expected_sub_sport
 

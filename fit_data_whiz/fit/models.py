@@ -2,9 +2,11 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
+from fit_data_whiz.utils.date_utils import try_to_compute_local_datetime
 
-class FitFileId(BaseModel):
-    file_type: str = Field(alias="type")
+
+class FileIdModel(BaseModel):
+    file_type: str | int = Field(alias="type")
     serial_number: int | None = None
     time_created: datetime | None = None
     manufacturer: str | None = None
@@ -12,7 +14,7 @@ class FitFileId(BaseModel):
     garmin_product: str | None = None
 
 
-class FitSession(BaseModel):
+class SessionModel(BaseModel):
     message_index: int
     timestamp: datetime
     start_time: datetime
@@ -65,7 +67,7 @@ class FitSession(BaseModel):
     total_fractional_descent: float | None = None
 
 
-class FitRecord(BaseModel):
+class RecordModel(BaseModel):
     timestamp: datetime
     position_lat: int | None = None
     position_long: int | None = None
@@ -88,16 +90,16 @@ class FitRecord(BaseModel):
     gps_accuracy: int | None = None
     vertical_speed: int | None = None
     calories: int | None = None
-    fractional_cadence: int | None = None
+    fractional_cadence: float | None = None
     step_length: int | None = None
     absolute_pressure: int | None = None
-    respiration_rate: int | None = None
-    enhanced_respiration_rate: int | None = None
+    respiration_rate: float | None = None
+    enhanced_respiration_rate: float | None = None
     current_stress: int | None = None
     ascent_rate: int | None = None
 
 
-class FitLap(BaseModel):
+class LapModel(BaseModel):
     message_index: int
     timestamp: datetime
 
@@ -158,20 +160,20 @@ class FitLap(BaseModel):
     total_fat_calories: int | None = None
 
     intensity: int | None = None
-    lap_trigger: int | None = None
+    lap_trigger: int | str | None = None
     gps_accuracy: int | None = None
 
     avg_temperature: int | None = None
     max_temperature: int | None = None
     min_tempearture: int | None = None
 
-    avg_respiration_rate: int | None = None
-    enhanced_avg_respiration_rate: int | None = None
-    max_respiration_rate: int | None = None
-    enhanced_max_respiration_rate: int | None = None
+    avg_respiration_rate: float | None = None
+    enhanced_avg_respiration_rate: float | None = None
+    max_respiration_rate: float | None = None
+    enhanced_max_respiration_rate: float | None = None
 
 
-class FitSet(BaseModel):
+class SetModel(BaseModel):
     timestamp: datetime
     duration: float | None = None
     repetitions: int | None = None
@@ -179,13 +181,13 @@ class FitSet(BaseModel):
     set_type: str | None = None
     start_time: datetime | None = None
     category: list[str] | None = None
-    category_subtype: list[str | int] | None = None
+    category_subtype: list[str | int | None] | None = None
     weight_display_unit: str | None = None
     message_index: int | None = None
     wkt_step_index: int | None = None
 
 
-class FitSplit(BaseModel):
+class SplitModel(BaseModel):
     split_type: str
     total_elapsed_time: float
     total_timer_time: float
@@ -202,7 +204,7 @@ class FitSplit(BaseModel):
     discarded: int | None = Field(None, alias="80")  # discarded (0)
 
 
-class FitWorkout(BaseModel):
+class WorkoutModel(BaseModel):
     message_index: int
     sport: str | None = None
     sub_sport: str | None = None
@@ -213,7 +215,7 @@ class FitWorkout(BaseModel):
     pool_length_unit: str | None = None
 
 
-class FitWorkoutStep(BaseModel):
+class WorkoutStepModel(BaseModel):
     message_index: int
 
     wkt_step_name: str | None = None
@@ -283,7 +285,7 @@ class FitWorkoutStep(BaseModel):
     secondary_custom_target_power_high: int | None = None
 
 
-class FitMonitoringInfo(BaseModel):
+class MonitoringInfoModel(BaseModel):
     timestamp: datetime
     local_timestamp: int | None = None
     activity_type: list[str] | None = None
@@ -292,7 +294,7 @@ class FitMonitoringInfo(BaseModel):
     resting_metabolic_rate: int | None = None
 
 
-class FitMonitoring(BaseModel):
+class MonitoringModel(BaseModel):
     timestamp: datetime | None = None
     # "device_index",
     calories: int | None = None
@@ -301,8 +303,8 @@ class FitMonitoring(BaseModel):
     steps: int | None = None
     strokes: int | None = None
     active_time: float | None = None  # in seconds
-    activity_type: str | None = None
-    activity_subtype: str | None = None
+    activity_type: str | int | None = None
+    activity_subtype: str | int | None = None
     activity_level: str | None = None  # low, medium, high
     distance_16: int | None = None
     cycles_16: int | None = None
@@ -325,24 +327,37 @@ class FitMonitoring(BaseModel):
     moderate_activity_minutes: int | None = None
     vigorous_activity_minutes: int | None = None
 
+    def is_daily_log(self) -> bool:
+        """Check if datetime is a daily log.
 
-class FitMonitoringHrData(BaseModel):
+        In monitoring messages the timestamp must align to logging interval, for
+        example, time must be 00:00:00 for daily log.
+
+        It returns True if utc_dt has 00:00:00 time in the local datetime.
+        """
+        if not self.timestamp:
+            return False
+        local_dt: datetime = try_to_compute_local_datetime(self.timestamp)
+        return local_dt.hour == 0 and local_dt.minute == 0 and local_dt.second == 0
+
+
+class MonitoringHrDataModel(BaseModel):
     timestamp: datetime
     resting_heart_rate: int
     current_day_resting_heart_rate: int
 
 
-class FitStressLevel(BaseModel):
+class StressLevelModel(BaseModel):
     stress_level_value: int
     stress_level_time: datetime
 
 
-class FitRespirationRate(BaseModel):
+class RespirationRateModel(BaseModel):
     timestamp: datetime
     respiration_rate: float  # breaths/min
 
 
-class FitHrvStatusSummary(BaseModel):
+class HrvStatusSummaryModel(BaseModel):
     timestamp: datetime
     weekly_average: float
     last_night_average: float
@@ -353,12 +368,12 @@ class FitHrvStatusSummary(BaseModel):
     status: str | int  # see HRV_STATUS in definitions
 
 
-class FitHrvValue(BaseModel):
+class HrvValueModel(BaseModel):
     timestamp: datetime
     value: int | None = None  # in ms (5 minute RMSSD)
 
 
-class FitSleepAssessment(BaseModel):
+class SleepAssessmentModel(BaseModel):
     combined_awake_score: int
     awake_time_score: int
     awakenings_count_score: int
@@ -375,52 +390,49 @@ class FitSleepAssessment(BaseModel):
     average_stress_during_sleep: float
 
 
-class FitSleepLevel(BaseModel):
+class SleepLevelModel(BaseModel):
     timestamp: datetime
     sleep_level: str | int | None = None  # see SLEEP_LEVEL in definitions
 
 
-class FitMultisportActivity(BaseModel):
-    sessions: list[FitSession]
-    records: list[FitRecord]
-    laps: list[FitLap]
+class ActivityModel(BaseModel):
+    session: SessionModel
+    workout: WorkoutModel | None = None,
+    workout_steps: list[WorkoutStepModel] = []
 
 
-class FitDistanceActivity(BaseModel):
-    session: FitSession
-    records: list[FitRecord]
-    laps: list[FitLap] = []
-    workout: FitWorkout | None = None
-    workout_steps: list[FitWorkoutStep] = []
+class MultisportActivityModel(BaseModel):
+    sessions: list[SessionModel]
+    records: list[RecordModel]
+    laps: list[LapModel]
 
 
-class FitClimbActivity(BaseModel):
-    session: FitSession
-    splits: list[FitSplit] = []
-    workout: FitWorkout | None = None
-    workout_steps: list[FitWorkoutStep] = []
+class DistanceActivityModel(ActivityModel):
+    records: list[RecordModel]
+    laps: list[LapModel] = []
 
 
-class FitSetActivity(BaseModel):
-    session: FitSession
-    sets: list[FitSet] = []
-    workout: FitWorkout | None = None
-    workout_steps: list[FitWorkoutStep] = []
+class ClimbActivityModel(ActivityModel):
+    splits: list[SplitModel] = []
 
 
-class FitMonitorModel(BaseModel):
-    monitoring_info: FitMonitoringInfo
-    monitorings: list[FitMonitoring]
-    hr_datas: list[FitMonitoringHrData] = []
-    stress_levels: list[FitStressLevel] = []
-    respiration_rates: list[FitRespirationRate] = []
+class SetActivityModel(ActivityModel):
+    sets: list[SetModel] = []
 
 
-class FitHrvModel(BaseModel):
-    summary: FitHrvStatusSummary
-    values: list[FitHrvValue] = []
+class MonitorModel(BaseModel):
+    monitoring_info: MonitoringInfoModel
+    monitorings: list[MonitoringModel]
+    hr_datas: list[MonitoringHrDataModel] = []
+    stress_levels: list[StressLevelModel] = []
+    respiration_rates: list[RespirationRateModel] = []
 
 
-class FitSleepModel(BaseModel):
-    assessment: FitSleepAssessment
-    levels: list[FitSleepLevel] = []
+class HrvModel(BaseModel):
+    summary: HrvStatusSummaryModel
+    values: list[HrvValueModel] = []
+
+
+class SleepModel(BaseModel):
+    assessment: SleepAssessmentModel
+    levels: list[SleepLevelModel] = []

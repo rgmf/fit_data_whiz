@@ -1,23 +1,23 @@
 from enum import Enum, StrEnum
 
 from fit_data_whiz.fit.models import (
-    FitFileId,
-    FitLap,
-    FitRecord,
-    FitSession,
-    FitSet,
-    FitSplit,
-    FitWorkout,
-    FitWorkoutStep,
-    FitMonitoringHrData,
-    FitStressLevel,
-    FitRespirationRate,
-    FitMonitoringInfo,
-    FitMonitoring,
-    FitHrvStatusSummary,
-    FitHrvValue,
-    FitSleepLevel,
-    FitSleepAssessment
+    FileIdModel,
+    LapModel,
+    RecordModel,
+    SessionModel,
+    SetModel,
+    SplitModel,
+    WorkoutModel,
+    WorkoutStepModel,
+    MonitoringHrDataModel,
+    StressLevelModel,
+    RespirationRateModel,
+    MonitoringInfoModel,
+    MonitoringModel,
+    HrvStatusSummaryModel,
+    HrvValueModel,
+    SleepLevelModel,
+    SleepAssessmentModel
 )
 
 
@@ -30,7 +30,7 @@ MESSAGES = {
     "FILE_ID": {
         "name": "FILE_ID",
         "num": 0,
-        "model_cls": FitFileId
+        "model_cls": FileIdModel
     },
 
     # ACTIVITY DEFINITIONS
@@ -47,32 +47,32 @@ MESSAGES = {
     "WORKOUT": {
         "name": "WORKOUT",
         "num": 26,
-        "model_cls": FitWorkout
+        "model_cls": WorkoutModel
     },
     "WORKOUT_STEP": {
         "name": "WORKOUT_STEP",
         "num": 27,
-        "model_cls": FitWorkoutStep
+        "model_cls": WorkoutStepModel
     },
     "RECORD": {
         "name": "RECORD",
         "num": 20,
-        "model_cls": FitRecord
+        "model_cls": RecordModel
     },
     "LAP": {
         "name": "LAP",
         "num": 19,
-        "model_cls": FitLap
+        "model_cls": LapModel
     },
     "SET": {
         "name": "SET",
         "num": 225,
-        "model_cls": FitSet
+        "model_cls": SetModel
     },
     "SPLIT": {
         "name": "SPLIT",
         "num": 312,
-        "model_cls": FitSplit
+        "model_cls": SplitModel
     },
     # "TIME_IN_ZONE": {
     #     "name": "TIME_IN_ZONE",
@@ -82,7 +82,7 @@ MESSAGES = {
     "SESSION": {
         "name": "SESSION",
         "num": 18,
-        "model_cls": FitSession
+        "model_cls": SessionModel
     },
     # "ACTIVITY": {
     #     "name": "ACTIVITY",
@@ -94,49 +94,49 @@ MESSAGES = {
     "MONITORING_INFO": {
         "name": "MONITORING_INFO",
         "num": 103,
-        "model_cls": FitMonitoringInfo
+        "model_cls": MonitoringInfoModel
     },
     "MONITORING": {
         "name": "MONITORING",
         "num": 55,
-        "model_cls": FitMonitoring
+        "model_cls": MonitoringModel
     },
     "MONITORING_HR_DATA": {
         "name": "MONITORING_HR_DATA",
         "num": 211,
-        "model_cls": FitMonitoringHrData
+        "model_cls": MonitoringHrDataModel
     },
     "STRESS_LEVEL": {
         "name": "STRESS_LEVEL",
         "num": 227,
-        "model_cls": FitStressLevel
+        "model_cls": StressLevelModel
     },
     "RESPIRATION_RATE": {
         "name": "RESPIRATION_RATE",
         "num": 297,
-        "model_cls": FitRespirationRate
+        "model_cls": RespirationRateModel
     },
 
     # SLEEP AND HRV DEFINITIONS
     "SLEEP_LEVEL": {
         "name": "SLEEP_LEVEL",
         "num": 275,
-        "model_cls": FitSleepLevel
+        "model_cls": SleepLevelModel
     },
     "SLEEP_ASSESSMENT": {
         "name": "SLEEP_ASSESSMENT",
         "num": 346,
-        "model_cls": FitSleepAssessment
+        "model_cls": SleepAssessmentModel
     },
     "HRV_STATUS_SUMMARY": {
         "name": "HRV_STATUS_SUMMARY",
         "num": 370,
-        "model_cls": FitHrvStatusSummary
+        "model_cls": HrvStatusSummaryModel
     },
     "HRV_VALUE": {
         "name": "HRV_VALUE",
         "num": 371,
-        "model_cls": FitHrvValue
+        "model_cls": HrvValueModel
     }
 }
 
@@ -175,7 +175,7 @@ class ClimbResult(Enum):
 
 
 # Training's excercise categories.
-class ExcerciseCategories(StrEnum):
+class ExerciseCategories(StrEnum):
     BENCH_PRESS = "bench_press"
     CALF_RAISE = "calf_raise"
     CARDIO = "cardio"

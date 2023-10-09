@@ -1,72 +1,73 @@
 from datetime import datetime, timedelta, date
 
-from ..parse import FitParser
-from ..parsers.results.result import FitResult
-from ..parsers.results.stats import FitMonitor, FitMonitoringInfo
+from fit_data_whiz.whiz import FitDataWhiz
+from fit_data_whiz.fit.results import FitMonitor
+from fit_data_whiz.fit.models import MonitorModel
 
 
 def assert_monitoring_data(path_file: str) -> None:
-    fit_parse: FitParser = FitParser(path_file)
-    monitor: FitResult = fit_parse.parse()
+    whiz = FitDataWhiz(path_file)
+    monitor: FitMonitor = whiz.parse()
 
+    # Dates and datetimes
     assert isinstance(monitor, FitMonitor)
-    assert isinstance(monitor.monitoring_info, FitMonitoringInfo)
+    assert isinstance(monitor.model, MonitorModel)
+    assert monitor.datetime_utc is not None
+    assert monitor.datetime_local is not None
 
-    local_datetime: datetime = monitor.monitoring_info.datetime_utc + timedelta(seconds=7200)
+    local_datetime: datetime = monitor.datetime_utc + timedelta(seconds=7200)
     local_date: date = date(
         year=local_datetime.year,
         month=local_datetime.month,
         day=local_datetime.day
     )
+    assert monitor.monitoring_date == local_date
+    assert (
+        monitor.datetime_local.year == local_date.year and
+        monitor.datetime_local.month == local_date.month and
+        monitor.datetime_local.day == local_date.day
+    )
 
-    # Monitoring Info
-    assert monitor.monitoring_info.monitoring_day == local_date
-    assert "walking" in monitor.monitoring_info.activities
-    assert "running" in monitor.monitoring_info.activities
-    assert type(monitor.monitoring_info.resting_metabolic_rate) is int
-    assert monitor.monitoring_info.resting_metabolic_rate > 0
-
-    # Monitorings
-    assert len(monitor.monitorings) > 0
-
-    # Calories
+    # Activities and resting metabolic rate and calories
+    assert "walking" in monitor.activities
+    assert "running" in monitor.activities
+    assert type(monitor.metabolic_calories) is int
+    assert type(monitor.active_calories) is int
+    assert type(monitor.total_calories) is int
     assert monitor.metabolic_calories is not None
     assert monitor.active_calories is not None
     assert monitor.total_calories is not None
 
-    # All data: day date, steps, heart rate, respiration rate and stress levels.
-    assert monitor.day_date is not None
-    assert monitor.fit_steps is not None
-    assert len(monitor.fit_heart_rates) > 0
-    assert monitor.resting_heart_rate is not None
-    assert len(monitor.respiration_rates) > 0
-    assert len(monitor.stress_levels) > 0
+    # All data: steps, heart rate, respiration rate and stress levels.
+    assert monitor.total_steps is not None
+    assert type(monitor.total_steps) is int
+
+    assert monitor.heart_rates is not None
+    assert len(monitor.heart_rates) > 0
+
+    assert monitor.activity_intensities is not None
     assert isinstance(monitor.activity_intensities, list)
+
+    assert monitor.respiration_rates is not None
+    assert isinstance(monitor.respiration_rates, list)
+    assert len(monitor.respiration_rates) > 0
+
+    assert monitor.stress_levels is not None
+    assert isinstance(monitor.stress_levels, list)
+    assert len(monitor.stress_levels) > 0
 
 
 def assert_activity_intensities(path_file: str, moderate_min: int, vigorous_min: int) -> None:
-    fit_parse: FitParser = FitParser(path_file)
-    monitor: FitMonitor = fit_parse.parse()
+    whiz = FitDataWhiz(path_file)
+    monitor: FitMonitor = whiz.parse()
 
-    assert sum([m.moderate for m in monitor.activity_intensities]) == moderate_min
-    assert sum([m.vigorous for m in monitor.activity_intensities]) == vigorous_min
+    assert sum([ai.moderate_minutes for ai in monitor.activity_intensities]) == moderate_min
+    assert sum([ai.vigorous_minutes for ai in monitor.activity_intensities]) == vigorous_min
 
 
 def test_monitoring_with_all():
     assert_monitoring_data("tests/files/monitor1_with_all.fit")
     assert_monitoring_data("tests/files/monitor2_with_all.fit")
-    # assert_monitoring_data("tests/files/monitor2/M9R00000.FIT")
-    # assert_monitoring_data("tests/files/monitor2/M9RB3400.FIT")
-    # assert_monitoring_data("tests/files/monitor2/M9S00000.FIT")
-    # assert_monitoring_data("tests/files/monitor2/M9SC0715.FIT")
-    # assert_monitoring_data("tests/files/monitor2/M9T00000.FIT")
-    # assert_monitoring_data("tests/files/monitor2/M9U00000.FIT")
-    # assert_monitoring_data("tests/files/monitor2/MA100000.FIT")
-    # assert_monitoring_data("tests/files/monitor2/MA1A1222.FIT")
-    # assert_monitoring_data("tests/files/monitor2/MA1B5812.FIT")
-    # assert_monitoring_data("tests/files/monitor2/MA200000.FIT")
-    # assert_monitoring_data("tests/files/monitor2/MA300000.FIT")
-    # assert_monitoring_data("tests/files/monitor2/MA3C0247.FIT")
 
 
 def test_activity_intensities():

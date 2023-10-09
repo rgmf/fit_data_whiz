@@ -1,31 +1,37 @@
 from datetime import datetime
 
-from ..parse import FitParser
-from ..parsers.results.result import FitResult, FitError
-from ..parsers.results.stats import (
+from fit_data_whiz.whiz import FitDataWhiz
+from fit_data_whiz.fit.results import (
     FitMultisportActivity,
     FitDistanceActivity,
-    FitTransitionActivity
+    FitTransitionActivity,
+    FitResult,
+    FitError
 )
-from ..definitions import (
+from fit_data_whiz.fit.definitions import (
     RUNNING_SPORT,
     CYCLING_SPORT,
     TRANSITION_SPORT,
     GENERIC_SUB_SPORT,
     ROAD_SUB_SPORT
 )
-from .test_fit_parse_distance_activities import assert_is_distance_activity_with_required_stats
+from .test_fit_parse_distance_activities import (
+    assert_is_distance_activity_with_required_stats
+)
 
 
-def assert_parse_without_errors(path_file: str) -> FitResult:
-    fit_parse = FitParser(path_file)
-    activity: FitResult = fit_parse.parse()
+def assert_parse_without_errors(path_file: str) -> FitMultisportActivity:
+    whiz = FitDataWhiz(path_file)
+    activity: FitMultisportActivity = whiz.parse()
     assert not isinstance(activity, FitError)
+    assert isinstance(activity, FitResult)
     assert isinstance(activity, FitMultisportActivity)
     return activity
 
 
-def assert_is_transition_activity_with_required_stats(activity: FitTransitionActivity) -> None:
+def assert_is_transition_activity_with_required_stats(
+        activity: FitTransitionActivity
+) -> None:
     """It asserts is a transition activity and it has required stats.
 
     Required stats are:

@@ -1,12 +1,12 @@
 from datetime import datetime, timedelta
 
-from ..parse import FitParser
-from ..parsers.results.stats import FitSleep
+from fit_data_whiz.whiz import FitDataWhiz
+from fit_data_whiz.fit.results import FitSleep, FitSleepLevel
 
 
 def sleep(path_file: str) -> None:
-    fit_parse: FitParser = FitParser(path_file)
-    sleep: FitSleep = fit_parse.parse()
+    whiz = FitDataWhiz(path_file)
+    sleep: FitSleep = whiz.parse()
 
     assert isinstance(sleep, FitSleep)
     assert len(sleep.dates) == 2
@@ -27,8 +27,10 @@ def sleep(path_file: str) -> None:
     assert isinstance(sleep.average_stress_during_sleep, float)
     assert len(sleep.levels) > 0
     for level in sleep.levels:
+        assert isinstance(level, FitSleepLevel)
         assert isinstance(level.datetime_utc, datetime)
-        assert isinstance(level.value, str)
+        assert isinstance(level.datetime_local, datetime)
+        assert isinstance(level.level, str)
 
 
 def test_sleep():

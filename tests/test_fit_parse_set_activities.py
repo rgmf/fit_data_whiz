@@ -1,24 +1,27 @@
 from datetime import datetime
 
-from ..parse import FitParser
-from ..parsers.results.result import FitResult, FitError
-from ..definitions import (
+from fit_data_whiz.whiz import FitDataWhiz
+from fit_data_whiz.fit.definitions import (
     TRAINING_SPORT,
     STRENGTH_TRAINING_SUB_SPORT,
-    ExcerciseCategories
+    ExerciseCategories
 )
-from ..parsers.results.stats import FitActivity, FitSetActivity, FitSet
+from fit_data_whiz.fit.results import FitActivity, FitSetActivity, FitSet, FitResult, FitError
 
 
-def assert_parse_without_errors(path_file: str) -> FitResult:
-    fit_parse = FitParser(path_file)
-    activity: FitResult = fit_parse.parse()
+def assert_parse_without_errors(path_file: str) -> FitSetActivity:
+    whiz = FitDataWhiz(path_file)
+    activity: FitSetActivity = whiz.parse()
     assert not isinstance(activity, FitError)
+    assert isinstance(activity, FitResult)
     assert isinstance(activity, FitActivity)
+    assert isinstance(activity, FitSetActivity)
     return activity
 
 
-def assert_sport(activity: FitActivity, expected_sport: str, expected_sub_sport: str) -> None:
+def assert_sport(
+        activity: FitSetActivity, expected_sport: str, expected_sub_sport: str
+) -> None:
     assert activity.sport == expected_sport
     assert activity.sub_sport == expected_sub_sport
 
@@ -47,7 +50,7 @@ def assert_is_set_activity_with_minimal_required_stats(activity: FitActivity) ->
 
 def assert_required_set_data(s: FitSet) -> None:
     assert s.order is not None and isinstance(s.order, int)
-    assert s.excercise is not None and isinstance(s.excercise, str)
+    assert s.exercise is not None and isinstance(s.exercise, str)
     assert s.time is not None
     assert isinstance(s.time.timestamp, datetime)
     assert isinstance(s.time.start_time, datetime)
@@ -81,5 +84,9 @@ def test_fit_parse_training_with_20_sets():
     rest = 20
     work = 20
     assert len([c for c in activity.sets]) == rest + work
-    assert len([c for c in activity.sets if c.excercise == ExcerciseCategories.REST]) == 20
-    assert len([c for c in activity.sets if c.excercise != ExcerciseCategories.REST]) == 20
+    assert len(
+        [c for c in activity.sets if c.exercise == ExerciseCategories.REST]
+    ) == 20
+    assert len(
+        [c for c in activity.sets if c.exercise != ExerciseCategories.REST]
+    ) == 20

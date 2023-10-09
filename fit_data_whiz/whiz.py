@@ -1,5 +1,6 @@
 import os
 
+from pydantic import BaseModel
 from garmin_fit_sdk import Decoder, Stream, Profile
 
 from fit_data_whiz.logging.logging import get_logger, initialize, LogLevel
@@ -82,7 +83,7 @@ class FitDataWhiz:
     """
     def __init__(self, fit_file_path: str) -> None:
         self._fit_file_path: str = fit_file_path
-        self._messages: dict[str, list] = {name: [] for name in MESSAGES}
+        self._messages: dict[str, list[BaseModel]] = {name: [] for name in MESSAGES}
         self._errors: list[Exception] = []
         self._has_critical_error: bool = False
 
@@ -124,7 +125,8 @@ class FitDataWhiz:
             return
 
         try:
-            model = MESSAGES[profile_name]["model_cls"](**mesg_data)
+            data_dict = {str(k): v for k, v in mesg_data.items()}
+            model = MESSAGES[profile_name]["model_cls"](**data_dict)
             self._messages[profile_name].append(model)
         except NotSupportedFitFileException as error:
             self._errors.append(error)

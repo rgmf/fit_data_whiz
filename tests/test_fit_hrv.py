@@ -1,12 +1,12 @@
 from datetime import datetime
 
-from ..parse import FitParser
-from ..parsers.results.stats import FitHrv
+from fit_data_whiz.whiz import FitDataWhiz
+from fit_data_whiz.fit.results import FitHrv
 
 
-def hrv(path_file: str) -> None:
-    fit_parse: FitParser = FitParser(path_file)
-    hrv: FitHrv = fit_parse.parse()
+def assert_is_an_hrv(path_file: str) -> None:
+    whiz = FitDataWhiz(path_file)
+    hrv = whiz.parse()
 
     assert isinstance(hrv, FitHrv)
     assert isinstance(hrv.datetime_utc, datetime)
@@ -19,10 +19,10 @@ def hrv(path_file: str) -> None:
     assert isinstance(hrv.status, str)
     assert len(hrv.values) > 0
     for v in hrv.values:
-        assert isinstance(v.datetime_utc, datetime)
-        assert isinstance(v.value, float)
+        assert isinstance(v.timestamp, datetime)
+        assert v.value is None or isinstance(v.value, int)
 
 
 def test_hrv():
-    hrv("tests/files/hrv1.fit")
-    hrv("tests/files/hrv2.fit")
+    assert_is_an_hrv("tests/files/hrv1.fit")
+    assert_is_an_hrv("tests/files/hrv2.fit")
